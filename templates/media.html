@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Media - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Gestione Media</h1>
+        <p>Aggiungi e naviga all'interno dei film e serie TV del tuo catalogo.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Aggiungi Nuovo Media da TMDB</div>
+    <div style="display:flex; gap:15px; margin-bottom: 20px;">
+        <input type="text" id="tmdb-search-query" class="form-control" placeholder="Cerca film o serie TV su TMDB...">
+        <select id="tmdb-search-type" class="form-control" style="width: 150px;">
+            <option value="movie">Film</option>
+            <option value="series">Serie TV</option>
+        </select>
+        <button class="btn" onclick="searchTMDB()">Cerca</button>
+    </div>
+    <div id="tmdb-results" style="display:none;" class="file-list"></div>
+</div>
+
+<div class="card">
+    <div class="card-title">Media in Catalogo</div>
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="local-search-query" class="form-control" placeholder="Filtra i media locali per titolo..." onkeyup="filterLocalMedia()">
+    </div>
+    <div class="media-grid" id="local-media-grid">
+        {% for item in media_items %}
+        <div class="media-card" data-title="{{ item.title.lower() }}" onclick="window.location.href='/media/{{ item.id }}'">
+            <div class="media-poster-container">
+                {% if item.poster_url %}
+                <img src="{{ item.poster_url }}" class="media-poster" alt="{{ item.title }}">
+                {% else %}
+                <div style="height:100%; display:flex; align-items:center; justify-content:center; background:#222; color:#555;">No Poster</div>
+                {% endif %}
+            </div>
+            <div class="media-info">
+                <div class="media-card-title">{{ item.title }}</div>
+                <div class="media-card-meta">{{ item.year }} • {{ "Film" if item.type == "movie" else "Serie TV" }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterLocalMedia() {
+    var query = document.getElementById("local-search-query").value.toLowerCase();
+    var cards = document.querySelectorAll("#local-media-grid .media-card");
+    cards.forEach(function(card) {
+        var title = card.getAttribute("data-title");
+        if (title.indexOf(query) > -1) {
+            card.style.display = "flex";
+        } else {
+            card.style.display = "none";
+        }
+    });
+}
+
+function searchTMDB() {
+    var query = document.getElementById("tmdb-search-query").value;
+    var type = document.getElementById("tmdb-search-type").value;
+    if (!query) return;
+
+    fetch("/api/tmdb/search?query=" + encodeURIComponent(query) + "&type=" + type)
+        .then(res => res.json())
+        .then(data => {
+            var container = document.getElementById("tmdb-results");
+            container.innerHTML = "";
+            container.style.display = "block";
+
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(function(item) {
+                    var div = document.createElement("div");
+                    div.className = "file-item";
+
+                    var title = item.title || item.name;
+                    var date = item.release_date || item.first_air_date || "";
+                    var year = date ? date.substring(0, 4) : "";
+
+                    div.innerHTML = `
+                        <div class="file-name"><strong>${title}</strong> (${year})</div>
+                        <button class="btn btn-success" onclick="addFromTMDB(${item.id}, '${type}')">Importa</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<div class='file-name'>Nessun risultato trovato.</div>";
+            }
+        });
+}
+
+function addFromTMDB(id, type) {
+    fetch("/api/media", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ tmdb_id: id, type: type })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok") {
+            alert("Media importato con successo!");
+            window.location.reload();
+        } else {
+            alert("Errore nell'importazione: " + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

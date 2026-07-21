@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stremio Catalog Provider{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            Stremio<span>Catalog</span>
+        </div>
+        <ul class="sidebar-menu">
+            <li class="sidebar-menu-item {% if active_page == 'dashboard' %}active{% endif %}">
+                <a href="/dashboard">Dashboard</a>
+            </li>
+            <li class="sidebar-menu-item {% if active_page == 'media' %}active{% endif %}">
+                <a href="/media">Media</a>
+            </li>
+            <li class="sidebar-menu-item {% if active_page == 'torrents' %}active{% endif %}">
+                <a href="/torrents">Torrents</a>
+            </li>
+        </ul>
+    </div>
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

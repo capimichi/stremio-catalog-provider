@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Dashboard</h1>
+        <p>Benvenuto nell'amministrazione del tuo catalogo Stremio.</p>
+    </div>
+</div>
+
+<div class="addon-banner">
+    <div class="addon-info">
+        <h3>Installa l'Addon su Stremio</h3>
+        <p>Utilizza questo link per installare il catalogo direttamente all'interno della tua applicazione Stremio.</p>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <input type="text" id="addon-url" class="form-control" style="width: 320px;" readonly value="{{ stremio_url }}">
+        <button class="btn btn-success" onclick="copyAddonUrl()">Copia Link</button>
+        <a href="{{ stremio_url.replace('http://', 'stremio://').replace('https://', 'stremio://') }}" class="btn">Installa Addon</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">🎬</div>
+        <div>
+            <div class="stat-value">{{ movie_count }}</div>
+            <div class="stat-label">Film in Catalogo</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📺</div>
+        <div>
+            <div class="stat-value">{{ series_count }}</div>
+            <div class="stat-label">Serie TV in Catalogo</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div>
+            <div class="stat-value">{{ torrent_count }}</div>
+            <div class="stat-label">Torrent Totali</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Stato della Coda dei Torrent</div>
+    <div style="display:flex; gap:30px; flex-wrap:wrap;">
+        <div><strong>In attesa (QUEUED):</strong> {{ queued_count }}</div>
+        <div><strong>In elaborazione (PROCESSING):</strong> {{ processing_count }}</div>
+        <div><strong>Processati (PROCESSED):</strong> {{ processed_count }}</div>
+        <div><strong>Falliti (FAILED):</strong> {{ failed_count }}</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyAddonUrl() {
+    var copyText = document.getElementById("addon-url");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(copyText.value);
+    alert("URL copiato negli appunti!");
+}
+</script>
+{% endblock %}

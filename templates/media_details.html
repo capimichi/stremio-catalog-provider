@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}{{ media.title }} - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Dettagli Media</h1>
+        <p><a href="/media" style="color:var(--accent); text-decoration:none;">&larr; Torna alla lista</a></p>
+    </div>
+</div>
+
+<div class="card" style="background-image: linear-gradient(to right, rgba(10,10,15,0.95), rgba(10,10,15,0.7)), url('{{ media.background_url or '' }}'); background-size: cover; background-position: center;">
+    <div class="details-container">
+        <div class="details-poster-box">
+            {% if media.poster_url %}
+            <img src="{{ media.poster_url }}" alt="{{ media.title }}">
+            {% else %}
+            <div style="width:100%; height:450px; background:#222; border-radius:20px; display:flex; align-items:center; justify-content:center;">Nessun Poster</div>
+            {% endif %}
+        </div>
+        <div class="details-info">
+            <h2>{{ media.title }}</h2>
+            <div class="details-year">{{ media.year }} • {{ "Film" if media.type == "movie" else "Serie TV" }}</div>
+            <div class="details-description">{{ media.description or 'Nessuna descrizione disponibile.' }}</div>
+
+            <div class="card-title">Associa Nuovo Torrent</div>
+            <div style="display:flex; gap:15px;">
+                <input type="text" id="magnet-url" class="form-control" placeholder="Inserisci il magnet link (magnet:?xt=urn:btih:...)">
+                <button class="btn" onclick="addTorrent()">Aggiungi Magnet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Torrent Associati a Questo Media</div>
+    {% if torrents %}
+    <table class="torrent-table">
+        <thead>
+            <tr>
+                <th>Titolo Torrent</th>
+                <th>Hash</th>
+                <th>Stato</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in torrents %}
+            <tr>
+                <td>{{ t.title or 'N/A' }}</td>
+                <td><code style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px; font-size:13px;">{{ t.info_hash }}</code></td>
+                <td>
+                    <span class="badge badge-{{ t.status.lower() }}">{{ t.status }}</span>
+                </td>
+                <td>
+                    <button class="btn btn-secondary" onclick="window.location.href='/torrents'">Vedi File</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--text-secondary);">Nessun torrent è attualmente associato a questo media.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addTorrent() {
+    var magnet = document.getElementById("magnet-url").value;
+    if (!magnet) return;
+
+    fetch("/api/torrents", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ magnet_url: magnet, media_id: {{ media.id }} })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok") {
+            alert("Torrent aggiunto alla coda con successo!");
+            window.location.reload();
+        } else {
+            alert("Errore nell'aggiunta: " + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

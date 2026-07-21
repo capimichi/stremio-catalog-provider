@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Torrents - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Coda Torrent</h1>
+        <p>Monitora lo stato di risoluzione dei magnet ed effettua correzioni manuali.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Aggiungi Torrent Generico</div>
+    <div style="display:flex; gap:15px;">
+        <input type="text" id="magnet-url-generic" class="form-control" placeholder="Inserisci magnet link...">
+        <button class="btn" onclick="addGenericTorrent()">Aggiungi</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Torrent in Coda</div>
+    <table class="torrent-table">
+        <thead>
+            <tr>
+                <th>Titolo</th>
+                <th>Hash</th>
+                <th>Aggiunto il</th>
+                <th>Stato</th>
+                <th>Azioni</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in torrents %}
+            <tr>
+                <td><strong>{{ t.title or 'Risoluzione titolo...' }}</strong></td>
+                <td><code style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">{{ t.info_hash }}</code></td>
+                <td>{{ t.added_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                <td><span class="badge badge-{{ t.status.lower() }}">{{ t.status }}</span></td>
+                <td>
+                    <div style="display:flex; gap:8px;">
+                        {% if t.status == 'FAILED' %}
+                        <button class="btn btn-secondary btn-sm" onclick="retryTorrent('{{ t.info_hash }}')">Riprova</button>
+                        {% endif %}
+                        <button class="btn btn-secondary btn-sm" onclick="toggleFiles('{{ t.info_hash }}')">File</button>
+                        <button class="btn btn-secondary btn-sm" style="background:rgba(255, 23, 68, 0.1); color:var(--danger);" onclick="deleteTorrent('{{ t.info_hash }}')">Elimina</button>
+                    </div>
+                </td>
+            </tr>
+            <tr id="files-{{ t.info_hash }}" style="display:none; background:rgba(0,0,0,0.15);">
+                <td colspan="5">
+                    <div class="file-list" id="file-list-content-{{ t.info_hash }}">
+                        Caricamento file...
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addGenericTorrent() {
+    var magnet = document.getElementById("magnet-url-generic").value;
+    if (!magnet) return;
+
+    fetch("/api/torrents", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ magnet_url: magnet })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok") {
+            alert("Torrent aggiunto!");
+            window.location.reload();
+        } else {
+            alert("Errore: " + data.error);
+        }
+    });
+}
+
+function retryTorrent(hash) {
+    fetch("/api/torrents/" + hash + "/retry", {
+        method: "POST"
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Torrent reinserito in coda!");
+        window.location.reload();
+    });
+}
+
+function deleteTorrent(hash) {
+    if (!confirm("Sei sicuro di voler eliminare questo torrent?")) return;
+    fetch("/api/torrents/" + hash, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Torrent eliminato!");
+        window.location.reload();
+    });
+}
+
+function toggleFiles(hash) {
+    var row = document.getElementById("files-" + hash);
+    if (row.style.display === "none") {
+        row.style.display = "table-row";
+        loadFiles(hash);
+    } else {
+        row.style.display = "none";
+    }
+}
+
+function loadFiles(hash) {
+    var container = document.getElementById("file-list-content-" + hash);
+    container.innerHTML = "Caricamento...";
+
+    fetch("/api/torrents/" + hash + "/mappings")
+        .then(res => res.json())
+        .then(data => {
+            container.innerHTML = "";
+            if (data.mappings && data.mappings.length > 0) {
+                data.mappings.forEach(function(m) {
+                    var div = document.createElement("div");
+                    div.className = "file-item";
+
+                    var sizeMB = (m.file_size / 1024 / 1024).toFixed(2);
+                    var mappingText = m.media_title ? `<strong>Associato a:</strong> ${m.media_title}` : "<span style='color:var(--text-secondary);'>Non associato</span>";
+                    if (m.episode_num !== null && m.season_num !== null) {
+                        mappingText += ` (S${m.season_num}E${m.episode_num})`;
+                    }
+
+                    div.innerHTML = `
+                        <div class="file-name">
+                            <div>${m.file_path} <span class="file-size">(${sizeMB} MB)</span></div>
+                            <div style="font-size:13px; margin-top:4px;">${mappingText}</div>
+                        </div>
+                        <button class="btn btn-secondary" onclick="window.location.href='/remap/${m.id}'">Modifica</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "Nessun file video trovato o mapping non ancora generato (il torrent deve essere PROCESSED).";
+            }
+        });
+}
+</script>
+{% endblock %}

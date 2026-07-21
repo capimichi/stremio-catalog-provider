@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Rimappa File - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Modifica Mapping File</h1>
+        <p><a href="/torrents" style="color:var(--accent); text-decoration:none;">&larr; Torna alla lista torrent</a></p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Dettagli File</div>
+    <div style="margin-bottom: 20px; line-height: 1.8;">
+        <div><strong>Percorso File:</strong> {{ mapping.file_path }}</div>
+        <div><strong>Dimensione:</strong> {{ (mapping.file_size / 1024 / 1024) | round(2) }} MB</div>
+        <div><strong>Media Corrente:</strong> {{ media.title if media else 'Nessuno' }} ({{ 'Serie TV' if media and media.type == 'series' else 'Film' if media else 'N/A' }})</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Configura Associazione</div>
+
+    <div class="form-group">
+        <label class="form-label" for="target-media-id">Associa a un altro Media del Catalogo:</label>
+        <select id="target-media-id" class="form-control">
+            <option value="">-- Nessuno / Rimuovi Associazione --</option>
+            {% for m in all_media %}
+            <option value="{{ m.id }}" {% if m.id == mapping.media_item_id %}selected{% endif %}>{{ m.title }} ({{ m.year }}) - {{ 'Serie TV' if m.type == 'series' else 'Film' }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div id="series-inputs" style="display: {% if media and media.type == 'series' %}block{% else %}none{% endif %};">
+        <div class="form-group">
+            <label class="form-label" for="season-num">Numero Stagione:</label>
+            <input type="number" id="season-num" class="form-control" placeholder="es. 1" value="{{ episode.season if episode else '' }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="episode-num">Numero Episodio:</label>
+            <input type="number" id="episode-num" class="form-control" placeholder="es. 3" value="{{ episode.episode if episode else '' }}">
+        </div>
+    </div>
+
+    <button class="btn" onclick="saveMapping()">Salva Associazione</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var allMediaTypes = {
+    {% for m in all_media %}
+    "{{ m.id }}": "{{ m.type }}",
+    {% endfor %}
+};
+
+document.getElementById("target-media-id").addEventListener("change", function() {
+    var val = this.value;
+    var seriesInputs = document.getElementById("series-inputs");
+    if (val && allMediaTypes[val] === "series") {
+        seriesInputs.style.display = "block";
+    } else {
+        seriesInputs.style.display = "none";
+    }
+});
+
+function saveMapping() {
+    var mediaId = document.getElementById("target-media-id").value;
+    var seasonNum = document.getElementById("season-num").value;
+    var episodeNum = document.getElementById("episode-num").value;
+
+    var payload = {
+        media_item_id: mediaId ? parseInt(mediaId) : null,
+        season_num: (mediaId && allMediaTypes[mediaId] === "series" && seasonNum) ? parseInt(seasonNum) : null,
+        episode_num: (mediaId && allMediaTypes[mediaId] === "series" && episodeNum) ? parseInt(episodeNum) : null
+    };
+
+    fetch("/api/mappings/{{ mapping.id }}", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok") {
+            alert("Mapping salvato correttamente!");
+            window.location.href = "/torrents";
+        } else {
+            alert("Errore durante il salvataggio: " + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}
