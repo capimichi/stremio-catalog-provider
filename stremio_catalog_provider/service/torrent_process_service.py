@@ -65,6 +65,8 @@ class TorrentProcessService:
 
             # 3. Filter and process video files
             video_extensions = (".mkv", ".mp4", ".avi", ".mov")
+            media_cache = {}  # Local cache to prevent redundant TMDB queries for files in the same torrent
+            
             for f in files:
                 file_path = f.get("path", "")
                 if not file_path.lower().endswith(video_extensions):
@@ -77,19 +79,25 @@ class TorrentProcessService:
                 if torrent.predefined_media_item_id:
                     media_item = self.media_repo.get_by_id(torrent.predefined_media_item_id)
                 else:
-                    # Auto search on TMDB
                     search_type = "series" if parsed["season"] is not None else "movie"
-                    results = self.tmdb_client.search_media(
-                        parsed["title"], search_type, parsed["year"]
-                    )
-                    if results:
-                        tmdb_id = results[0]["id"]
-                        try:
-                            media_item = self.media_item_service.add_media_from_tmdb(
-                                tmdb_id, search_type
-                            )
-                        except Exception:
-                            pass
+                    cache_key = (parsed["title"].lower().strip(), search_type)
+                    
+                    if cache_key in media_cache:
+                        media_item = media_cache[cache_key]
+                    else:
+                        # Auto search on TMDB
+                        results = self.tmdb_client.search_media(
+                            parsed["title"], search_type, parsed["year"]
+                        )
+                        if results:
+                            tmdb_id = results[0]["id"]
+                            try:
+                                media_item = self.media_item_service.add_media_from_tmdb(
+                                    tmdb_id, search_type
+                                )
+                            except Exception:
+                                pass
+                        media_cache[cache_key] = media_item
 
                 # Create file mapping record
                 mapping = FileMapping(
