@@ -29,7 +29,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(['predefined_media_item_id'], ['media_items.id'], ),
         sa.PrimaryKeyConstraint('info_hash')
     )
+    op.create_index('ix_torrents_status', 'torrents', ['status'], unique=False)
 
 
 def downgrade() -> None:
+    op.drop_index('ix_torrents_status', table_name='torrents')
     op.drop_table('torrents')
