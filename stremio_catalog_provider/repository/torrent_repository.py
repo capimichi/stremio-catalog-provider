@@ -1,3 +1,4 @@
+from typing import Optional
 from injector import inject
 from sqlalchemy.orm import Session
 from stremio_catalog_provider.entity.torrent import Torrent
@@ -31,17 +32,23 @@ class TorrentRepository:
             session.delete(torrent)
             session.commit()
 
-    def get_next_queued_for_update(self) -> Torrent | None:
+    def get_next_queued_for_update(self) -> Optional[Torrent]:
         """Retrieves and locks the next QUEUED torrent, changing its status to PROCESSING."""
         session = self.get_session()
-        query = session.query(Torrent).filter(Torrent.status == "QUEUED").order_by(Torrent.added_at.asc())
+        try:
+            query = session.query(Torrent).filter(Torrent.status == "QUEUED").order_by(Torrent.added_at.asc())
 
-        # Attempt to extract with skip locked if supported (MySQL/MariaDB)
-        if session.bind.dialect.name in ("mysql", "mariadb"):
-            query = query.with_for_update(skip_locked=True)
+            # Attempt to extract with skip locked if supported (MySQL/MariaDB)
+            if session.bind.dialect.name in ("mysql", "mariadb"):
+                query = query.with_for_update(skip_locked=True)
 
-        torrent = query.first()
-        if torrent:
-            torrent.status = "PROCESSING"
-            session.commit()
-        return torrent
+            torrent = query.first()
+            if torrent:
+                torrent.status = "PROCESSING"
+                session.commit()
+            else:
+                session.rollback()
+            return torrent
+        except Exception:
+            session.rollback()
+            raise

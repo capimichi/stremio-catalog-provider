@@ -14,7 +14,8 @@ class Torrent(BaseEntity):
     title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(
         Enum("QUEUED", "PROCESSING", "PROCESSED", "FAILED", name="torrent_status"),
-        default="QUEUED"
+        default="QUEUED",
+        index=True
     )
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     added_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
