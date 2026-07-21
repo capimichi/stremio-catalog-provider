@@ -13,14 +13,15 @@ class TMDbClient:
 
     def search_media(self, query: str, media_type: str, year: Optional[int] = None) -> list[dict[str, Any]]:
         """Searches movies or series on TMDb."""
-        endpoint = f"{self.base_url}/search/{media_type}"
+        tmdb_type = "tv" if media_type == "series" else media_type
+        endpoint = f"{self.base_url}/search/{tmdb_type}"
         params: dict[str, Any] = {
             "api_key": self.config.api_key,
             "query": query,
             "language": "it-IT"
         }
         if year:
-            params["year" if media_type == "movie" else "first_air_date_year"] = year
+            params["year" if tmdb_type == "movie" else "first_air_date_year"] = year
 
         response = httpx.get(endpoint, params=params, timeout=30.0)
         response.raise_for_status()
@@ -31,7 +32,8 @@ class TMDbClient:
 
     def get_details(self, tmdb_id: int, media_type: str) -> dict[str, Any]:
         """Retrieves details of a movie or series, including external IDs (like IMDb ID)."""
-        endpoint = f"{self.base_url}/{media_type}/{tmdb_id}"
+        tmdb_type = "tv" if media_type == "series" else media_type
+        endpoint = f"{self.base_url}/{tmdb_type}/{tmdb_id}"
         params: dict[str, Any] = {
             "api_key": self.config.api_key,
             "language": "it-IT",

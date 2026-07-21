@@ -31,3 +31,32 @@ def test_get_details_success() -> None:
     details = client.get_details(123, "movie")
     assert details["id"] == 123
     assert details["external_ids"]["imdb_id"] == "tt1375666"
+
+@respx.mock
+def test_search_series_success() -> None:
+    respx.get("https://api.themoviedb.org/3/search/tv").mock(
+        return_value=httpx.Response(200, json={"results": [{"id": 456, "name": "Modern Family"}]})
+    )
+
+    client = TMDbClient(TMDbConfig("dummy"))
+    results = client.search_media("Modern Family", "series")
+    assert len(results) == 1
+    assert results[0]["id"] == 456
+
+@respx.mock
+def test_get_series_details_success() -> None:
+    respx.get("https://api.themoviedb.org/3/tv/456").mock(
+        return_value=httpx.Response(
+            200,
+            json={
+                "id": 456,
+                "name": "Modern Family",
+                "external_ids": {"imdb_id": "tt1442437"}
+            }
+        )
+    )
+
+    client = TMDbClient(TMDbConfig("dummy"))
+    details = client.get_details(456, "series")
+    assert details["id"] == 456
+    assert details["external_ids"]["imdb_id"] == "tt1442437"
