@@ -11,9 +11,17 @@ from stremio_catalog_provider.entity.media_item import MediaItem
 from stremio_catalog_provider.entity.episode import Episode
 from stremio_catalog_provider.entity.file_mapping import FileMapping
 
+import os
+from dotenv import load_dotenv
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+load_dotenv()
+db_url = os.environ.get("DATABASE_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
