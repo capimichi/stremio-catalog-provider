@@ -80,9 +80,9 @@ class WebUiController:
         stremio_url = f"{request.base_url}manifest.json"
 
         return self.templates.TemplateResponse(
+            request,
             "dashboard.html",
             {
-                "request": request,
                 "active_page": "dashboard",
                 "stremio_url": stremio_url,
                 "movie_count": len(movies),
@@ -102,9 +102,9 @@ class WebUiController:
         self.verify_credentials(credentials)
         media_items = self.media_repo.search_local(query="")
         return self.templates.TemplateResponse(
+            request,
             "media.html",
             {
-                "request": request,
                 "active_page": "media",
                 "media_items": media_items
             }
@@ -127,9 +127,9 @@ class WebUiController:
         torrents = sorted(torrents, key=lambda x: x.added_at, reverse=True)
 
         return self.templates.TemplateResponse(
+            request,
             "media_details.html",
             {
-                "request": request,
                 "active_page": "media",
                 "media": media,
                 "torrents": torrents
@@ -143,9 +143,9 @@ class WebUiController:
         self.verify_credentials(credentials)
         torrents = self.torrent_repo.get_all()
         return self.templates.TemplateResponse(
+            request,
             "torrents.html",
             {
-                "request": request,
                 "active_page": "torrents",
                 "torrents": torrents
             }
@@ -166,9 +166,9 @@ class WebUiController:
         all_media = self.media_repo.search_local(query="")
 
         return self.templates.TemplateResponse(
+            request,
             "remap.html",
             {
-                "request": request,
                 "active_page": "torrents",
                 "mapping": mapping,
                 "media": media,
