@@ -10,6 +10,6 @@ python-dotenv>=1.0.1
 click>=8.1.7
 jinja2>=3.1.0
 python-multipart>=0.0.6
-PTN>=2.7.0
+parse-torrent-title>=2.7.0
 pytest>=8.0.0
 pytest-asyncio>=0.23.0
