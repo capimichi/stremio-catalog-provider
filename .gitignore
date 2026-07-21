@@ -116,3 +116,4 @@ pythonenv/
 # Project specific
 .env
 .env.*
+!.env.example
