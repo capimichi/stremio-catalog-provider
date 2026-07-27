@@ -41,3 +41,12 @@ class TorrServerClient:
         payload = {"action": "drop", "hash": info_hash}
         response = httpx.post(endpoint, json=payload, auth=self.auth, timeout=30.0)
         response.raise_for_status()
+
+    def get_torrent(self, info_hash: str) -> dict[str, Any]:
+        """Retrieves the full torrent details from TorrServer."""
+        endpoint = f"{self.config.base_url}/torrents"
+        payload = {"action": "get", "hash": info_hash}
+        response = httpx.post(endpoint, json=payload, auth=self.auth, timeout=30.0)
+        response.raise_for_status()
+        return response.json()
+

@@ -18,8 +18,8 @@ class FileMappingRepository:
         session.add(mapping)
         session.commit()
 
-    def get_by_torrent(self, torrent_hash: str) -> list[FileMapping]:
-        return self.get_session().query(FileMapping).filter_by(torrent_hash=torrent_hash).all()
+    def get_by_torrent(self, torrent_id: int) -> list[FileMapping]:
+        return self.get_session().query(FileMapping).filter_by(torrent_id=torrent_id).all()
 
     def get_by_media_item(self, media_item_id: int) -> list[FileMapping]:
         return self.get_session().query(FileMapping).filter_by(media_item_id=media_item_id).all()

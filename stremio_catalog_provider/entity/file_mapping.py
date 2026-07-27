@@ -1,7 +1,10 @@
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 from sqlalchemy import Integer, String, BigInteger, Boolean, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from stremio_catalog_provider.entity.base import BaseEntity
+
+if TYPE_CHECKING:
+    from stremio_catalog_provider.entity.torrent import Torrent
 
 class FileMapping(BaseEntity):
     """SQLAlchemy model representing a mapping between a torrent file and a MediaItem/Episode."""
@@ -9,8 +12,8 @@ class FileMapping(BaseEntity):
     __tablename__ = "file_mappings"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    torrent_hash: Mapped[str] = mapped_column(
-        ForeignKey("torrents.info_hash", ondelete="CASCADE"), nullable=False
+    torrent_id: Mapped[int] = mapped_column(
+        ForeignKey("torrents.id", ondelete="CASCADE"), nullable=False
     )
     file_index: Mapped[int] = mapped_column(Integer, nullable=False)
     file_path: Mapped[str] = mapped_column(String(500), nullable=False)
@@ -22,3 +25,11 @@ class FileMapping(BaseEntity):
         ForeignKey("episodes.id", ondelete="SET NULL"), nullable=True
     )
     manually_corrected: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Relazioni
+    torrent: Mapped["Torrent"] = relationship("Torrent", back_populates="mappings")
+
+    @property
+    def torrent_hash(self) -> str:
+        return self.torrent.info_hash
+

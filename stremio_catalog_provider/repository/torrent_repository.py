@@ -19,6 +19,9 @@ class TorrentRepository:
         session.add(torrent)
         session.commit()
 
+    def get_by_id(self, torrent_id: int) -> Torrent | None:
+        return self.get_session().query(Torrent).filter_by(id=torrent_id).first()
+
     def get_by_hash(self, info_hash: str) -> Torrent | None:
         return self.get_session().query(Torrent).filter_by(info_hash=info_hash).first()
 

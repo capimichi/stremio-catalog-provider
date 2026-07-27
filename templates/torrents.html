@@ -42,6 +42,7 @@
                         {% if t.status == 'FAILED' %}
                         <button class="btn btn-secondary btn-sm" onclick="retryTorrent('{{ t.info_hash }}')">Riprova</button>
                         {% endif %}
+                        <button class="btn btn-secondary btn-sm" onclick="window.location.href='/torrents/{{ t.id }}/edit'">Modifica</button>
                         <button class="btn btn-secondary btn-sm" onclick="toggleFiles('{{ t.info_hash }}')">File</button>
                         <button class="btn btn-secondary btn-sm" style="background:rgba(255, 23, 68, 0.1); color:var(--danger);" onclick="deleteTorrent('{{ t.info_hash }}')">Elimina</button>
                     </div>

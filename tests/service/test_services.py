@@ -80,7 +80,7 @@ def test_file_mapping_service_remap() -> None:
 
     mapping = FileMapping(
         id=1,
-        torrent_hash="hash123",
+        torrent_id=torrent.id,
         file_index=0,
         file_path="S1E2.mkv",
         file_size=1000,
@@ -121,7 +121,7 @@ def test_stremio_service() -> None:
     session.commit()
 
     mapping_movie = FileMapping(
-        torrent_hash="hash123",
+        torrent_id=torrent.id,
         file_index=0,
         file_path="movie.mkv",
         file_size=1000 * 1024 * 1024,

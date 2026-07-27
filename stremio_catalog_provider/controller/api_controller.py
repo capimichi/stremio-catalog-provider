@@ -14,6 +14,8 @@ from stremio_catalog_provider.service.media_item_service import MediaItemService
 from stremio_catalog_provider.service.file_mapping_service import FileMappingService
 from stremio_catalog_provider.entity.episode import Episode
 from stremio_catalog_provider.entity.file_mapping import FileMapping
+from stremio_catalog_provider.repository.episode_repository import EpisodeRepository
+from stremio_catalog_provider.service.torrent_parser_service import TorrentParserService
 
 class TorrentRequest(BaseModel):
     magnet_url: str
@@ -28,6 +30,11 @@ class MappingUpdateRequest(BaseModel):
     season_num: Optional[int] = None
     episode_num: Optional[int] = None
 
+class TorrentUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    predefined_media_item_id: Optional[int] = None
+    remap_files: bool = False
+
 class ApiController:
     """REST API Controller exposing actions for management actions (Torrents, mapping, search)."""
 
@@ -41,7 +48,9 @@ class ApiController:
         media_repo: MediaItemRepository,
         torrent_repo: TorrentRepository,
         mapping_repo: FileMappingRepository,
-        tmdb_client: TMDbClient
+        tmdb_client: TMDbClient,
+        episode_repo: EpisodeRepository,
+        parser_service: TorrentParserService
     ) -> None:
         self.config = config
         self.torrent_service = torrent_service
@@ -51,6 +60,8 @@ class ApiController:
         self.torrent_repo = torrent_repo
         self.mapping_repo = mapping_repo
         self.tmdb_client = tmdb_client
+        self.episode_repo = episode_repo
+        self.parser_service = parser_service
         self.router: APIRouter = APIRouter()
         self.security: HTTPBasic = HTTPBasic()
         self._register_routes()
@@ -80,6 +91,7 @@ class ApiController:
         self.router.add_api_route("/api/torrents", self.add_torrent, methods=["POST"])
         self.router.add_api_route("/api/torrents/{info_hash}/retry", self.retry_torrent, methods=["POST"])
         self.router.add_api_route("/api/torrents/{info_hash}", self.delete_torrent, methods=["DELETE"])
+        self.router.add_api_route("/api/torrents/{torrent_id}", self.update_torrent, methods=["PUT"])
         self.router.add_api_route("/api/torrents/{info_hash}/mappings", self.get_mappings, methods=["GET"])
         self.router.add_api_route("/api/mappings/{mapping_id}", self.update_mapping, methods=["PUT"])
         self.router.add_api_route("/api/tmdb/search", self.search_tmdb, methods=["GET"])
@@ -117,7 +129,10 @@ class ApiController:
     ) -> dict[str, Any]:
         """Retrieves list of file mappings generated for a torrent."""
         self.verify_credentials(credentials)
-        mappings = self.mapping_repo.get_by_torrent(info_hash)
+        torrent = self.torrent_repo.get_by_hash(info_hash)
+        if not torrent:
+            return {"mappings": []}
+        mappings = self.mapping_repo.get_by_torrent(torrent.id)
         res = []
         session = self.mapping_repo.get_session()
         for m in mappings:
@@ -186,3 +201,45 @@ class ApiController:
             return {"status": "ok", "media_id": media.id}
         except Exception as e:
             return {"status": "error", "error": str(e)}
+
+    async def update_torrent(
+        self, torrent_id: int, req: TorrentUpdateRequest, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> dict[str, Any]:
+        """Updates torrent metadata and optionally triggers remapping of associated files."""
+        self.verify_credentials(credentials)
+        session = self.torrent_repo.get_session()
+        torrent = self.torrent_repo.get_by_id(torrent_id)
+        if not torrent:
+            raise HTTPException(status_code=404, detail="Torrent not found")
+
+        if req.title is not None:
+            torrent.title = req.title
+        
+        torrent.predefined_media_item_id = req.predefined_media_item_id
+        session.commit()
+
+        # Se richiesta la rimappatura di tutti i file a caldo
+        if req.remap_files and req.predefined_media_item_id is not None:
+            mappings = self.mapping_repo.get_by_torrent(torrent.id)
+            media_item = self.media_repo.get_by_id(req.predefined_media_item_id)
+            
+            if media_item:
+                for m in mappings:
+                    m.media_item_id = media_item.id
+                    
+                    # Se serie TV, estraiamo SxxExx e associamo l'episodio corretto
+                    if media_item.type == "series":
+                        parsed = self.parser_service.parse_filename(m.file_path.split("/")[-1])
+                        if parsed["season"] is not None and parsed["episode"] is not None:
+                            episode = self.episode_repo.get_or_create(
+                                media_item.id, parsed["season"], parsed["episode"]
+                            )
+                            m.episode_id = episode.id
+                        else:
+                            m.episode_id = None
+                    else:
+                        m.episode_id = None
+                        
+                session.commit()
+
+        return {"status": "ok"}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Modifica Torrent - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Modifica Torrent</h1>
+        <p><a href="/torrents" style="color:var(--accent); text-decoration:none;">&larr; Torna alla lista torrent</a></p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Dettagli del Torrent</div>
+    
+    <div class="form-group">
+        <label class="form-label" for="torrent-title">Titolo Visualizzato:</label>
+        <input type="text" id="torrent-title" class="form-control" value="{{ torrent.title or '' }}" placeholder="Risoluzione titolo...">
+    </div>
+
+    <div class="form-group">
+        <label class="form-label" for="predefined-media-id">Associa al Media:</label>
+        <select id="predefined-media-id" class="form-control">
+            <option value="">-- Nessun Media Associato --</option>
+            {% for m in all_media %}
+            <option value="{{ m.id }}" {% if m.id == torrent.predefined_media_item_id %}selected{% endif %}>{{ m.title }} ({{ m.year }}) - {{ 'Serie TV' if m.type == 'series' else 'Film' }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="remap-files" style="width:20px; height:20px; cursor:pointer;">
+        <label for="remap-files" style="cursor:pointer; font-size:14px; color:var(--text-secondary);">Rimappa automaticamente tutti i file del torrent a questo media (ricostruisce gli episodi se Serie TV)</label>
+    </div>
+
+    <button class="btn" onclick="saveTorrent()">Salva Modifiche</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveTorrent() {
+    var title = document.getElementById("torrent-title").value;
+    var mediaId = document.getElementById("predefined-media-id").value;
+    var remap = document.getElementById("remap-files").checked;
+
+    var payload = {
+        title: title || null,
+        predefined_media_item_id: mediaId ? parseInt(mediaId) : null,
+        remap_files: remap
+    };
+
+    fetch("/api/torrents/{{ torrent.id }}", {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok") {
+            alert("Torrent aggiornato correttamente!");
+            window.location.href = "/torrents";
+        } else {
+            alert("Errore durante l'aggiornamento: " + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

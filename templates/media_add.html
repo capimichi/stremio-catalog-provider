@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Aggiungi Media - Stremio Catalog{% endblock %}
+
+{% block content %}
+<div class="header">
+    <div class="header-title">
+        <h1>Aggiungi Nuovo Media</h1>
+        <p><a href="/media" style="color:var(--accent); text-decoration:none;">&larr; Torna alla lista</a></p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-title">Cerca su TMDB</div>
+    <div style="display:flex; gap:15px; margin-bottom: 20px;">
+        <input type="text" id="tmdb-search-query" class="form-control" placeholder="Cerca film o serie TV su TMDB...">
+        <select id="tmdb-search-type" class="form-control" style="width: 150px;">
+            <option value="movie">Film</option>
+            <option value="series">Serie TV</option>
+        </select>
+        <button class="btn" onclick="searchTMDB()">Cerca</button>
+    </div>
+    <div id="tmdb-results" style="display:none;" class="file-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function searchTMDB() {
+    var query = document.getElementById("tmdb-search-query").value;
+    var type = document.getElementById("tmdb-search-type").value;
+    if (!query) return;
+
+    fetch("/api/tmdb/search?query=" + encodeURIComponent(query) + "&type=" + type)
+        .then(res => res.json())
+        .then(data => {
+            var container = document.getElementById("tmdb-results");
+            container.innerHTML = "";
+            container.style.display = "block";
+
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(function(item) {
+                    var div = document.createElement("div");
+                    div.className = "file-item";
+
+                    var title = item.title || item.name;
+                    var date = item.release_date || item.first_air_date || "";
+                    var year = date ? date.substring(0, 4) : "";
+
+                    div.innerHTML = `
+                        <div class="file-name"><strong>${title}</strong> (${year})</div>
+                        <button class="btn btn-success" onclick="addFromTMDB(${item.id}, '${type}')">Importa</button>
+                    `;
+                    container.appendChild(div);
+                });
+            } else {
+                container.innerHTML = "<div class='file-name'>Nessun risultato trovato.</div>";
+            }
+        });
+}
+
+function addFromTMDB(id, type) {
+    fetch("/api/media", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ tmdb_id: id, type: type })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "ok") {
+            alert("Media importato con successo!");
+            window.location.href = "/media";
+        } else {
+            alert("Errore nell'importazione: " + data.error);
+        }
+    });
+}
+</script>
+{% endblock %}

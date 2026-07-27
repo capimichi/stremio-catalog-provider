@@ -59,8 +59,10 @@ class WebUiController:
     def _register_routes(self) -> None:
         self.router.add_api_route("/dashboard", self.dashboard, methods=["GET"], response_class=HTMLResponse)
         self.router.add_api_route("/media", self.media, methods=["GET"], response_class=HTMLResponse)
+        self.router.add_api_route("/media/add", self.media_add, methods=["GET"], response_class=HTMLResponse)
         self.router.add_api_route("/media/{media_id}", self.media_details, methods=["GET"], response_class=HTMLResponse)
         self.router.add_api_route("/torrents", self.torrents, methods=["GET"], response_class=HTMLResponse)
+        self.router.add_api_route("/torrents/{torrent_id}/edit", self.torrent_edit, methods=["GET"], response_class=HTMLResponse)
         self.router.add_api_route("/remap/{mapping_id}", self.remap, methods=["GET"], response_class=HTMLResponse)
 
     async def dashboard(
@@ -110,6 +112,19 @@ class WebUiController:
             }
         )
 
+    async def media_add(
+        self, request: Request, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> Any:
+        """Renders the page to add/import a new MediaItem from TMDB."""
+        self.verify_credentials(credentials)
+        return self.templates.TemplateResponse(
+            request,
+            "media_add.html",
+            {
+                "active_page": "media"
+            }
+        )
+
     async def media_details(
         self, request: Request, media_id: int, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
     ) -> Any:
@@ -121,10 +136,8 @@ class WebUiController:
 
         # Find torrents associated with this media item
         all_mappings = self.mapping_repo.get_by_media_item(media_id)
-        torrent_hashes = {m.torrent_hash for m in all_mappings}
-        torrents = [self.torrent_repo.get_by_hash(h) for h in torrent_hashes]
-        torrents = [t for t in torrents if t is not None]
-        torrents = sorted(torrents, key=lambda x: x.added_at, reverse=True)
+        torrents = {m.torrent for m in all_mappings if m.torrent is not None}
+        torrents = sorted(list(torrents), key=lambda x: x.added_at, reverse=True)
 
         return self.templates.TemplateResponse(
             request,
@@ -161,6 +174,7 @@ class WebUiController:
         if not mapping:
             raise HTTPException(status_code=404, detail="Mapping not found")
 
+        torrent = mapping.torrent
         media = self.media_repo.get_by_id(mapping.media_item_id) if mapping.media_item_id else None
         episode = session.query(Episode).filter_by(id=mapping.episode_id).first() if mapping.episode_id else None
         all_media = self.media_repo.search_local(query="")
@@ -171,8 +185,29 @@ class WebUiController:
             {
                 "active_page": "torrents",
                 "mapping": mapping,
+                "torrent": torrent,
                 "media": media,
                 "episode": episode,
                 "all_media": all_media
             }
         )
+
+    async def torrent_edit(
+        self, request: Request, torrent_id: int, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
+    ) -> Any:
+        """Renders the torrent edit details page."""
+        self.verify_credentials(credentials)
+        torrent = self.torrent_repo.get_by_id(torrent_id)
+        if not torrent:
+            raise HTTPException(status_code=404, detail="Torrent not found")
+        all_media = self.media_repo.search_local(query="")
+        return self.templates.TemplateResponse(
+            request,
+            "torrent_edit.html",
+            {
+                "active_page": "torrents",
+                "torrent": torrent,
+                "all_media": all_media
+            }
+        )
+

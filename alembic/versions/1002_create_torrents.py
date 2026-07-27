@@ -18,6 +18,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         'torrents',
+        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
         sa.Column('info_hash', sa.String(length=40), nullable=False),
         sa.Column('magnet_url', sa.Text(), nullable=False),
         sa.Column('title', sa.String(length=255), nullable=True),
@@ -27,7 +28,8 @@ def upgrade() -> None:
         sa.Column('processed_at', sa.DateTime(), nullable=True),
         sa.Column('predefined_media_item_id', sa.Integer(), nullable=True),
         sa.ForeignKeyConstraint(['predefined_media_item_id'], ['media_items.id'], ),
-        sa.PrimaryKeyConstraint('info_hash')
+        sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('info_hash')
     )
     op.create_index('ix_torrents_status', 'torrents', ['status'], unique=False)
 

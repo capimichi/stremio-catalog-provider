@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
-from sqlalchemy import String, Text, DateTime, Enum, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from typing import Optional, List
+from sqlalchemy import String, Text, DateTime, Enum, ForeignKey, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from stremio_catalog_provider.entity.base import BaseEntity
 
 class Torrent(BaseEntity):
@@ -9,7 +9,8 @@ class Torrent(BaseEntity):
 
     __tablename__ = "torrents"
 
-    info_hash: Mapped[str] = mapped_column(String(40), primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    info_hash: Mapped[str] = mapped_column(String(40), unique=True, index=True, nullable=False)
     magnet_url: Mapped[str] = mapped_column(Text, nullable=False)
     title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     status: Mapped[str] = mapped_column(
@@ -23,3 +24,7 @@ class Torrent(BaseEntity):
     predefined_media_item_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("media_items.id"), nullable=True
     )
+
+    # Relationship back-reference
+    mappings: Mapped[List["FileMapping"]] = relationship("FileMapping", back_populates="torrent", cascade="all, delete-orphan")
+

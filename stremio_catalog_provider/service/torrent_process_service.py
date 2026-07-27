@@ -55,7 +55,25 @@ class TorrentProcessService:
             start_time = time.time()
             files = []
             while time.time() - start_time < poll_timeout:
-                files = self.torr_client.get_torrent_files(torrent.info_hash)
+                torrent_data = self.torr_client.get_torrent(torrent.info_hash)
+                files = torrent_data.get("file_stats", [])
+                title = torrent_data.get("title")
+
+                # Fallback PTN: Se il titolo del torrent non è risolto da TorrServer, usa il primo file video
+                if not title and files:
+                    video_extensions = (".mkv", ".mp4", ".avi", ".mov")
+                    first_video = next(
+                        (f.get("path", "").split("/")[-1] for f in files if f.get("path", "").lower().endswith(video_extensions)),
+                        None
+                    )
+                    if first_video:
+                        parsed_file = self.parser_service.parse_filename(first_video)
+                        title = parsed_file.get("title")
+
+                if title and title != torrent.title:
+                    torrent.title = title
+                    session.commit()
+
                 if files:
                     break
                 time.sleep(poll_interval)
@@ -101,7 +119,7 @@ class TorrentProcessService:
 
                 # Create file mapping record
                 mapping = FileMapping(
-                    torrent_hash=torrent.info_hash,
+                    torrent_id=torrent.id,
                     file_index=f.get("id"),
                     file_path=file_path,
                     file_size=f.get("size", 0),

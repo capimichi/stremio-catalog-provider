@@ -36,7 +36,7 @@ def test_stremio_endpoints() -> None:
     session.commit()
 
     mapping = FileMapping(
-        torrent_hash="hash123",
+        torrent_id=torrent.id,
         file_index=0,
         file_path="movie.mp4",
         file_size=2000000000,

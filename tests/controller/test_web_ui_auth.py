@@ -62,3 +62,58 @@ def test_web_ui_and_api_auth_allowed() -> None:
     wrong_headers = {"Authorization": f"Basic {wrong_token}"}
     res_ui_wrong = client.get("/dashboard", headers=wrong_headers)
     assert res_ui_wrong.status_code == 401
+
+
+def test_update_torrent_endpoint() -> None:
+    container = DefaultContainer.getInstance()
+    ui_config = container.get(WebUiConfig)
+    ui_config.username = "test_user"
+    ui_config.password = "test_pass"
+
+    db_manager = container.get(DbManager)
+    BaseEntity.metadata.create_all(db_manager.engine)
+    session = db_manager.get_session()
+
+    from stremio_catalog_provider.entity.media_item import MediaItem
+    from stremio_catalog_provider.entity.torrent import Torrent
+    from stremio_catalog_provider.entity.file_mapping import FileMapping
+    
+    media = MediaItem(id=10, imdb_id="ttMovie", type="movie", title="Movie Test", year=2026)
+    session.add(media)
+    
+    torrent = Torrent(info_hash="hashupdate", magnet_url="magnetupdate", title="Original Title", status="QUEUED")
+    session.add(torrent)
+    session.commit()
+
+    mapping = FileMapping(torrent_id=torrent.id, file_index=0, file_path="movie.mkv", file_size=1000)
+    session.add(mapping)
+    session.commit()
+
+    client = TestClient(app)
+    token = base64.b64encode(b"test_user:test_pass").decode("utf-8")
+    headers = {"Authorization": f"Basic {token}"}
+
+    payload = {
+        "title": "New Title",
+        "predefined_media_item_id": 10,
+        "remap_files": True
+    }
+
+    # Verify authentication is required
+    response_no_auth = client.put(f"/api/torrents/{torrent.id}", json=payload)
+    assert response_no_auth.status_code == 401
+
+    # Update torrent and mapping
+    response = client.put(f"/api/torrents/{torrent.id}", json=payload, headers=headers)
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+    # Verify changes in DB
+    session.expire_all()
+    updated_torrent = session.query(Torrent).filter_by(id=torrent.id).first()
+    assert updated_torrent.title == "New Title"
+    assert updated_torrent.predefined_media_item_id == 10
+
+    updated_mapping = session.query(FileMapping).filter_by(id=mapping.id).first()
+    assert updated_mapping.media_item_id == 10
+

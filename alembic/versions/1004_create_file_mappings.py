@@ -19,7 +19,7 @@ def upgrade() -> None:
     op.create_table(
         'file_mappings',
         sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('torrent_hash', sa.String(length=40), nullable=False),
+        sa.Column('torrent_id', sa.Integer(), nullable=False),
         sa.Column('file_index', sa.Integer(), nullable=False),
         sa.Column('file_path', sa.String(length=500), nullable=False),
         sa.Column('file_size', sa.BigInteger(), nullable=False),
@@ -28,7 +28,7 @@ def upgrade() -> None:
         sa.Column('manually_corrected', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(['episode_id'], ['episodes.id'], ondelete='SET NULL'),
         sa.ForeignKeyConstraint(['media_item_id'], ['media_items.id'], ondelete='SET NULL'),
-        sa.ForeignKeyConstraint(['torrent_hash'], ['torrents.info_hash'], ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['torrent_id'], ['torrents.id'], ondelete='CASCADE'),
         sa.PrimaryKeyConstraint('id')
     )
 

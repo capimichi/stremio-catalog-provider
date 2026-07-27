@@ -21,3 +21,18 @@ def test_get_next_queued_for_update() -> None:
     assert first is not None
     assert first.info_hash == "hash1"
     assert first.status == "PROCESSING"
+
+
+def test_get_by_id() -> None:
+    db_manager = DbManager("sqlite:///:memory:")
+    BaseEntity.metadata.create_all(db_manager.engine)
+    repo = TorrentRepository(db_manager)
+
+    t = Torrent(info_hash="hash1", magnet_url="magnet1", title="T1", status="QUEUED")
+    repo.add(t)
+    
+    assert t.id is not None
+    fetched = repo.get_by_id(t.id)
+    assert fetched is not None
+    assert fetched.info_hash == "hash1"
+

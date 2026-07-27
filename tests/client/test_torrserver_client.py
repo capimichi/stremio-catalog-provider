@@ -51,3 +51,15 @@ def test_remove_torrent_success() -> None:
     client = TorrServerClient(TorrServerConfig("http://local:8090"))
     client.remove_torrent("hash123")
     assert route.called
+
+
+@respx.mock
+def test_get_torrent() -> None:
+    respx.post("http://local:8090/torrents").mock(
+        return_value=httpx.Response(200, json={"hash": "hash123", "title": "My Super Torrent", "file_stats": []})
+    )
+
+    client = TorrServerClient(TorrServerConfig("http://local:8090"))
+    data = client.get_torrent("hash123")
+    assert data["title"] == "My Super Torrent"
+
