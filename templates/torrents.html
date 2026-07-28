@@ -141,10 +141,10 @@ function loadFiles(hash) {
 
                     div.innerHTML = `
                         <div class="file-name">
-                            <div>\${m.file_path} <span class="file-size">(\${sizeMB} MB)</span></div>
-                            <div style="font-size:13px; margin-top:4px;">\${mappingText}</div>
+                            <div>${m.file_path} <span class="file-size">(${sizeMB} MB)</span></div>
+                            <div style="font-size:13px; margin-top:4px;">${mappingText}</div>
                         </div>
-                        <button class="btn btn-secondary btn-sm" onclick="window.location.href='/remap/\${m.id}'" title="Modifica mapping"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.location.href='/remap/${m.id}'" title="Modifica mapping"><i class="fa-solid fa-pen-to-square"></i></button>
                     `;
                     container.appendChild(div);
                 });
