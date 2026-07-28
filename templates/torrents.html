@@ -20,44 +20,46 @@
 
 <div class="card">
     <div class="card-title">Torrent in Coda</div>
-    <table class="torrent-table">
-        <thead>
-            <tr>
-                <th>Titolo</th>
-                <th>Hash</th>
-                <th>Aggiunto il</th>
-                <th>Stato</th>
-                <th>Azioni</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for t in torrents %}
-            <tr>
-                <td><strong>{{ t.title or 'Risoluzione titolo...' }}</strong></td>
-                <td><code style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">{{ t.info_hash }}</code></td>
-                <td>{{ t.added_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td><span class="badge badge-{{ t.status.lower() }}">{{ t.status }}</span></td>
-                <td>
-                    <div style="display:flex; gap:8px;">
-                        {% if t.status == 'FAILED' %}
-                        <button class="btn btn-secondary btn-sm" onclick="retryTorrent('{{ t.info_hash }}')">Riprova</button>
-                        {% endif %}
-                        <button class="btn btn-secondary btn-sm" onclick="window.location.href='/torrents/{{ t.id }}/edit'">Modifica</button>
-                        <button class="btn btn-secondary btn-sm" onclick="toggleFiles('{{ t.info_hash }}')">File</button>
-                        <button class="btn btn-secondary btn-sm" style="background:rgba(255, 23, 68, 0.1); color:var(--danger);" onclick="deleteTorrent('{{ t.info_hash }}')">Elimina</button>
-                    </div>
-                </td>
-            </tr>
-            <tr id="files-{{ t.info_hash }}" style="display:none; background:rgba(0,0,0,0.15);">
-                <td colspan="5">
-                    <div class="file-list" id="file-list-content-{{ t.info_hash }}">
-                        Caricamento file...
-                    </div>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="torrent-table">
+            <thead>
+                <tr>
+                    <th class="col-title">Titolo</th>
+                    <th class="col-hash">Hash</th>
+                    <th>Aggiunto il</th>
+                    <th>Stato</th>
+                    <th class="col-actions">Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in torrents %}
+                <tr>
+                    <td class="col-title"><strong>{{ t.title or 'Risoluzione titolo...' }}</strong></td>
+                    <td class="col-hash"><code style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">{{ t.info_hash }}</code></td>
+                    <td>{{ t.added_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td><span class="badge badge-{{ t.status.lower() }}">{{ t.status }}</span></td>
+                    <td class="col-actions">
+                        <div style="display:flex; gap:8px;">
+                            {% if t.status == 'FAILED' %}
+                            <button class="btn btn-secondary btn-sm" onclick="retryTorrent('{{ t.info_hash }}')" title="Riprova"><i class="fa-solid fa-rotate-right"></i></button>
+                            {% endif %}
+                            <button class="btn btn-secondary btn-sm" onclick="window.location.href='/torrents/{{ t.id }}/edit'" title="Modifica"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleFiles('{{ t.info_hash }}')" title="File contenuti"><i class="fa-solid fa-folder-open"></i></button>
+                            <button class="btn btn-secondary btn-sm" style="background:rgba(255, 23, 68, 0.1); color:var(--danger);" onclick="deleteTorrent('{{ t.info_hash }}')" title="Elimina"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                <tr id="files-{{ t.info_hash }}" style="display:none; background:rgba(0,0,0,0.15);">
+                    <td colspan="5">
+                        <div class="file-list" id="file-list-content-{{ t.info_hash }}">
+                            Caricamento file...
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}
 
@@ -139,10 +141,10 @@ function loadFiles(hash) {
 
                     div.innerHTML = `
                         <div class="file-name">
-                            <div>${m.file_path} <span class="file-size">(${sizeMB} MB)</span></div>
-                            <div style="font-size:13px; margin-top:4px;">${mappingText}</div>
+                            <div>\${m.file_path} <span class="file-size">(\${sizeMB} MB)</span></div>
+                            <div style="font-size:13px; margin-top:4px;">\${mappingText}</div>
                         </div>
-                        <button class="btn btn-secondary" onclick="window.location.href='/remap/${m.id}'">Modifica</button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.location.href='/remap/\${m.id}'" title="Modifica mapping"><i class="fa-solid fa-pen-to-square"></i></button>
                     `;
                     container.appendChild(div);
                 });

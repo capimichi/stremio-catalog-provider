@@ -389,26 +389,66 @@ body {
 }
 
 /* Torrent list / Queue tables */
-.torrent-table {
+.table-responsive {
     width: 100%;
-    border-collapse: collapse;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     margin-top: 15px;
 }
 
+.torrent-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
 .torrent-table th, .torrent-table td {
-    padding: 16px 20px;
+    padding: 12px 16px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
 }
 
 .torrent-table th {
     color: var(--text-secondary);
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .torrent-table td {
-    font-size: 15px;
+    font-size: 14px;
+}
+
+/* Regole per il troncamento con ellissi (...) */
+.col-title {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.col-hash {
+    max-width: 160px;
+}
+
+.col-hash code {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.col-actions {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.col-actions .btn {
+    padding: 8px 12px;
 }
 
 .badge {
