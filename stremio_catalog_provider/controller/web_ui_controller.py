@@ -6,6 +6,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from injector import inject
 from stremio_catalog_provider.config.web_ui_config import WebUiConfig
+from stremio_catalog_provider.config.app_config import AppConfig
 from stremio_catalog_provider.repository.media_item_repository import MediaItemRepository
 from stremio_catalog_provider.repository.torrent_repository import TorrentRepository
 from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
@@ -20,12 +21,14 @@ class WebUiController:
     def __init__(
         self,
         config: WebUiConfig,
+        app_config: AppConfig,
         media_repo: MediaItemRepository,
         torrent_repo: TorrentRepository,
         mapping_repo: FileMappingRepository,
         episode_repo: EpisodeRepository
     ) -> None:
         self.config = config
+        self.app_config = app_config
         self.media_repo = media_repo
         self.torrent_repo = torrent_repo
         self.mapping_repo = mapping_repo
@@ -80,7 +83,10 @@ class WebUiController:
         processed = sum(1 for t in torrents if t.status == "PROCESSED")
         failed = sum(1 for t in torrents if t.status == "FAILED")
 
-        stremio_url = f"{request.base_url}manifest.json"
+        base_url = self.app_config.base_url or str(request.base_url)
+        if not base_url.endswith("/"):
+            base_url += "/"
+        stremio_url = f"{base_url}manifest.json"
 
         return self.templates.TemplateResponse(
             request,

@@ -6,6 +6,7 @@ from injector import Injector
 from stremio_catalog_provider.config.tmdb_config import TMDbConfig
 from stremio_catalog_provider.config.torrserver_config import TorrServerConfig
 from stremio_catalog_provider.config.web_ui_config import WebUiConfig
+from stremio_catalog_provider.config.app_config import AppConfig
 from stremio_catalog_provider.manager.db_manager import DbManager
 
 T = TypeVar("T")
@@ -37,8 +38,10 @@ class DefaultContainer:
         torr_pass = os.environ.get("TORRSERVER_PASSWORD")
         ui_user = os.environ.get("BASIC_AUTH_USERNAME", "admin")
         ui_pass = os.environ.get("BASIC_AUTH_PASSWORD", "admin")
+        base_url = os.environ.get("BASE_URL")
 
         self.injector.binder.bind(DbManager, to=DbManager(db_url))
         self.injector.binder.bind(TMDbConfig, to=TMDbConfig(tmdb_key))
         self.injector.binder.bind(TorrServerConfig, to=TorrServerConfig(torr_url, torr_user, torr_pass))
         self.injector.binder.bind(WebUiConfig, to=WebUiConfig(ui_user, ui_pass))
+        self.injector.binder.bind(AppConfig, to=AppConfig(base_url))
