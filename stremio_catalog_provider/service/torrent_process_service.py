@@ -122,7 +122,7 @@ class TorrentProcessService:
                     torrent_id=torrent.id,
                     file_index=f.get("id"),
                     file_path=file_path,
-                    file_size=f.get("size", 0),
+                    file_size=f.get("length") or f.get("size") or 0,
                     media_item_id=media_item.id if media_item else None
                 )
 
