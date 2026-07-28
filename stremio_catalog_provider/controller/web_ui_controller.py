@@ -1,7 +1,7 @@
 import secrets
 from typing import Any
 from fastapi import APIRouter, Request, Depends, HTTPException, status
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from injector import inject
@@ -57,6 +57,7 @@ class WebUiController:
             )
 
     def _register_routes(self) -> None:
+        self.router.add_api_route("/", self.root_redirect, methods=["GET"])
         self.router.add_api_route("/dashboard", self.dashboard, methods=["GET"], response_class=HTMLResponse)
         self.router.add_api_route("/media", self.media, methods=["GET"], response_class=HTMLResponse)
         self.router.add_api_route("/media/add", self.media_add, methods=["GET"], response_class=HTMLResponse)
@@ -210,4 +211,8 @@ class WebUiController:
                 "all_media": all_media
             }
         )
+
+    async def root_redirect(self) -> RedirectResponse:
+        """Redirects root path to dashboard page."""
+        return RedirectResponse(url="/dashboard")
 

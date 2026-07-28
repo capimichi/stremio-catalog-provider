@@ -56,3 +56,11 @@ def test_torrents_page_elements_and_layout() -> None:
     assert "fa-pen-to-square" in html
     assert "fa-folder-open" in html
     assert "fa-trash-can" in html
+
+def test_root_path_redirects_to_dashboard() -> None:
+    client = TestClient(app)
+    # Eseguiamo una GET a / (non richiede auth perché il redirect avviene prima di chiedere auth sulla pagina di destinazione)
+    res = client.get("/", follow_redirects=False)
+    assert res.status_code == 307
+    assert res.headers["location"] == "/dashboard"
+
