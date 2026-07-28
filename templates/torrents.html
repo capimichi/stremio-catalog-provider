@@ -35,7 +35,7 @@
                 {% for t in torrents %}
                 <tr>
                     <td class="col-title"><strong>{{ t.title or 'Risoluzione titolo...' }}</strong></td>
-                    <td class="col-hash"><code style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">{{ t.info_hash }}</code></td>
+                    <td class="col-hash"><code title="{{ t.info_hash }}" style="background:rgba(255,255,255,0.05); padding:4px 8px; border-radius:6px;">{{ t.info_hash }}</code></td>
                     <td>{{ t.added_at.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td><span class="badge badge-{{ t.status.lower() }}">{{ t.status }}</span></td>
                     <td class="col-actions">
