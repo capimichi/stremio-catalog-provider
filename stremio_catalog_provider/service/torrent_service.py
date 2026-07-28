@@ -24,7 +24,7 @@ class TorrentService:
                 info_hash=info_hash,
                 magnet_url=magnet_url,
                 status="QUEUED",
-                predefined_media_item_id=media_id
+                media_id=media_id
             )
             self.repo.add(torrent)
         return torrent

@@ -21,7 +21,7 @@ class Torrent(BaseEntity):
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     added_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
-    predefined_media_item_id: Mapped[Optional[int]] = mapped_column(
+    media_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("media_items.id"), nullable=True
     )
 

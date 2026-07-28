@@ -28,7 +28,7 @@ def test_process_next_torrent_with_predefined_media_item() -> None:
         info_hash="hash123",
         magnet_url="magnet:?xt=urn:btih:hash123",
         status="QUEUED",
-        predefined_media_item_id=55
+        media_id=55
     )
     session.add(torrent)
     session.commit()
@@ -129,6 +129,7 @@ def test_process_next_torrent_auto_tmdb_search() -> None:
     processed_torrent = session.query(Torrent).filter_by(info_hash="hash456").first()
     assert processed_torrent is not None
     assert processed_torrent.status == "PROCESSED"
+    assert processed_torrent.media_id == 99
 
     mock_tmdb.search_media.assert_called_once_with("The Matrix", "movie", 1999)
     mock_media_item_service.add_media_from_tmdb.assert_called_once_with(603, "movie")

@@ -94,8 +94,8 @@ class TorrentProcessService:
                 parsed = self.parser_service.parse_filename(file_path.split("/")[-1])
 
                 media_item = None
-                if torrent.predefined_media_item_id:
-                    media_item = self.media_repo.get_by_id(torrent.predefined_media_item_id)
+                if torrent.media_id:
+                    media_item = self.media_repo.get_by_id(torrent.media_id)
                 else:
                     search_type = "series" if parsed["season"] is not None else "movie"
                     cache_key = (parsed["title"].lower().strip(), search_type)
@@ -138,6 +138,11 @@ class TorrentProcessService:
                     mapping.episode_id = episode.id
 
                 self.mapping_repo.add(mapping)
+
+            # Salva il primo media_item_id rilevato dai file se non è già presente un media_id
+            mapped_ids = [m.media_item_id for m in torrent.mappings if m.media_item_id is not None]
+            if mapped_ids and not torrent.media_id:
+                torrent.media_id = mapped_ids[0]
 
             torrent.status = "PROCESSED"
             torrent.processed_at = datetime.utcnow()

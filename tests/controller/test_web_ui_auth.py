@@ -95,7 +95,7 @@ def test_update_torrent_endpoint() -> None:
 
     payload = {
         "title": "New Title",
-        "predefined_media_item_id": 10,
+        "media_id": 10,
         "remap_files": True
     }
 
@@ -112,7 +112,7 @@ def test_update_torrent_endpoint() -> None:
     session.expire_all()
     updated_torrent = session.query(Torrent).filter_by(id=torrent.id).first()
     assert updated_torrent.title == "New Title"
-    assert updated_torrent.predefined_media_item_id == 10
+    assert updated_torrent.media_id == 10
 
     updated_mapping = session.query(FileMapping).filter_by(id=mapping.id).first()
     assert updated_mapping.media_item_id == 10

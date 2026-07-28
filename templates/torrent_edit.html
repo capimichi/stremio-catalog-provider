@@ -23,7 +23,7 @@
         <select id="predefined-media-id" class="form-control">
             <option value="">-- Nessun Media Associato --</option>
             {% for m in all_media %}
-            <option value="{{ m.id }}" {% if m.id == torrent.predefined_media_item_id %}selected{% endif %}>{{ m.title }} ({{ m.year }}) - {{ 'Serie TV' if m.type == 'series' else 'Film' }}</option>
+            <option value="{{ m.id }}" {% if m.id == torrent.media_id %}selected{% endif %}>{{ m.title }} ({{ m.year }}) - {{ 'Serie TV' if m.type == 'series' else 'Film' }}</option>
             {% endfor %}
         </select>
     </div>
@@ -46,7 +46,7 @@ function saveTorrent() {
 
     var payload = {
         title: title || null,
-        predefined_media_item_id: mediaId ? parseInt(mediaId) : null,
+        media_id: mediaId ? parseInt(mediaId) : null,
         remap_files: remap
     };
 

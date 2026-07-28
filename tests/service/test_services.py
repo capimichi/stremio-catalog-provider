@@ -35,12 +35,12 @@ def test_torrent_service_add() -> None:
     torrent = service.add_torrent(magnet, media_id=42)
 
     assert torrent.info_hash == "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b"
-    assert torrent.predefined_media_item_id == 42
+    assert torrent.media_id == 42
     assert torrent.status == "QUEUED"
 
     again = service.add_torrent(magnet, media_id=99)
     assert again.info_hash == "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b"
-    assert again.predefined_media_item_id == 42
+    assert again.media_id == 42
 
 def test_media_item_service_add() -> None:
     db_manager = DbManager("sqlite:///:memory:")

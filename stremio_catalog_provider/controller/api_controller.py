@@ -32,7 +32,7 @@ class MappingUpdateRequest(BaseModel):
 
 class TorrentUpdateRequest(BaseModel):
     title: Optional[str] = None
-    predefined_media_item_id: Optional[int] = None
+    media_id: Optional[int] = None
     remap_files: bool = False
 
 class ApiController:
@@ -215,13 +215,13 @@ class ApiController:
         if req.title is not None:
             torrent.title = req.title
         
-        torrent.predefined_media_item_id = req.predefined_media_item_id
+        torrent.media_id = req.media_id
         session.commit()
 
         # Se richiesta la rimappatura di tutti i file a caldo
-        if req.remap_files and req.predefined_media_item_id is not None:
+        if req.remap_files and req.media_id is not None:
             mappings = self.mapping_repo.get_by_torrent(torrent.id)
-            media_item = self.media_repo.get_by_id(req.predefined_media_item_id)
+            media_item = self.media_repo.get_by_id(req.media_id)
             
             if media_item:
                 for m in mappings:

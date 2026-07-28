@@ -26,8 +26,8 @@ def upgrade() -> None:
         sa.Column('error_message', sa.Text(), nullable=True),
         sa.Column('added_at', sa.DateTime(), nullable=False),
         sa.Column('processed_at', sa.DateTime(), nullable=True),
-        sa.Column('predefined_media_item_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['predefined_media_item_id'], ['media_items.id'], ),
+        sa.Column('media_id', sa.Integer(), nullable=True),
+        sa.ForeignKeyConstraint(['media_id'], ['media_items.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('info_hash')
     )
