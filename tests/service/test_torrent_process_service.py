@@ -43,7 +43,7 @@ def test_process_next_torrent_with_predefined_media_item() -> None:
     mock_torr.get_torrent.return_value = {
         "hash": "hash123",
         "title": "Predefined Movie",
-        "file_stats": [{"id": 0, "path": "movie.mp4", "size": 123456}]
+        "file_stats": [{"id": 1, "path": "movie.mp4", "size": 123456}]
     }
 
     mock_tmdb = MagicMock(spec=TMDbClient)
@@ -207,7 +207,7 @@ def test_process_next_torrent_fallback_title_ptn() -> None:
     mock_torr.get_torrent.return_value = {
         "hash": "hashfallback",
         "title": "",  # Empty title to trigger fallback
-        "file_stats": [{"id": 0, "path": "The.Matrix.1999.mkv", "size": 123456}]
+        "file_stats": [{"id": 1, "path": "The.Matrix.1999.mkv", "size": 123456}]
     }
 
     mock_tmdb = MagicMock(spec=TMDbClient)

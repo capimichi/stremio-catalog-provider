@@ -109,7 +109,7 @@ class StremioService:
                     streams.append({
                         "title": f"Stream {m.file_path} ({round(m.file_size / 1024 / 1024, 2)} MB)",
                         "infoHash": m.torrent_hash,
-                        "fileIdx": m.file_index,
+                        "fileIdx": m.file_index - 1,
                         "sources": trackers
                     })
         elif media_type == "series":
@@ -129,7 +129,7 @@ class StremioService:
                             streams.append({
                                 "title": f"Episodio {episode_num} - {m.file_path} ({round(m.file_size / 1024 / 1024, 2)} MB)",
                                 "infoHash": m.torrent_hash,
-                                "fileIdx": m.file_index,
+                                "fileIdx": m.file_index - 1,
                                 "sources": trackers
                             })
         return {"streams": streams}

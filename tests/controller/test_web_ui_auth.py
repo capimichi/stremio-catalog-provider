@@ -85,7 +85,7 @@ def test_update_torrent_endpoint() -> None:
     session.add(torrent)
     session.commit()
 
-    mapping = FileMapping(torrent_id=torrent.id, file_index=0, file_path="movie.mkv", file_size=1000)
+    mapping = FileMapping(torrent_id=torrent.id, file_index=1, file_path="movie.mkv", file_size=1000)
     session.add(mapping)
     session.commit()
 

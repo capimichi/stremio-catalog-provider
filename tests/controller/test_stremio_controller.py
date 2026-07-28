@@ -37,7 +37,7 @@ def test_stremio_endpoints() -> None:
 
     mapping = FileMapping(
         torrent_id=torrent.id,
-        file_index=0,
+        file_index=1,
         file_path="movie.mp4",
         file_size=2000000000,
         media_item_id=media.id

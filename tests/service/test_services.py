@@ -81,7 +81,7 @@ def test_file_mapping_service_remap() -> None:
     mapping = FileMapping(
         id=1,
         torrent_id=torrent.id,
-        file_index=0,
+        file_index=1,
         file_path="S1E2.mkv",
         file_size=1000,
         media_item_id=77
@@ -122,7 +122,7 @@ def test_stremio_service() -> None:
 
     mapping_movie = FileMapping(
         torrent_id=torrent.id,
-        file_index=0,
+        file_index=1,
         file_path="movie.mkv",
         file_size=1000 * 1024 * 1024,
         media_item_id=media_movie.id

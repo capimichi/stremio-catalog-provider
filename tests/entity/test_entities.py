@@ -50,7 +50,7 @@ def test_torrent_id_relationship() -> None:
     # Creazione FileMapping associato
     mapping = FileMapping(
         torrent_id=torrent.id,
-        file_index=0,
+        file_index=1,
         file_path="video.mkv",
         file_size=1000000,
         manually_corrected=False
