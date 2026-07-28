@@ -149,5 +149,6 @@ def test_stremio_service() -> None:
     movie_stream = service.get_stream("movie", "ttMovie")
     assert len(movie_stream["streams"]) == 1
     assert "movie.mkv" in movie_stream["streams"][0]["title"]
-    assert "link=0" in movie_stream["streams"][0]["url"]
-    assert "hash=hash123" in movie_stream["streams"][0]["url"]
+    assert movie_stream["streams"][0]["infoHash"] == "hash123"
+    assert movie_stream["streams"][0]["fileIdx"] == 0
+

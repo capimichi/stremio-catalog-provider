@@ -1,4 +1,5 @@
 from typing import Any
+import urllib.parse
 from injector import inject
 from stremio_catalog_provider.repository.media_item_repository import MediaItemRepository
 from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
@@ -85,6 +86,15 @@ class StremioService:
             meta["videos"] = sorted(videos, key=lambda x: (x["season"], x["episode"]))
         return {"meta": meta}
 
+    def _get_trackers(self, magnet_url: str) -> list[str]:
+        try:
+            parsed = urllib.parse.urlparse(magnet_url)
+            params = urllib.parse.parse_qs(parsed.query)
+            trackers = params.get("tr", [])
+            return [f"tracker:{tr}" for tr in trackers]
+        except Exception:
+            return []
+
     def get_stream(self, media_type: str, stream_id: str) -> dict[str, Any]:
         """Returns available video streams for a specific movie or TV series episode."""
         streams = []
@@ -95,10 +105,12 @@ class StremioService:
             if media:
                 mappings = session.query(FileMapping).filter_by(media_item_id=media.id).all()
                 for m in mappings:
-                    stream_url = f"{self.torr_config.base_url}/stream?link={m.file_index}&hash={m.torrent_hash}&play"
+                    trackers = self._get_trackers(m.torrent.magnet_url)
                     streams.append({
                         "title": f"Stream {m.file_path} ({round(m.file_size / 1024 / 1024, 2)} MB)",
-                        "url": stream_url
+                        "infoHash": m.torrent_hash,
+                        "fileIdx": m.file_index,
+                        "sources": trackers
                     })
         elif media_type == "series":
             # stream_id format is imdb_id:season:episode
@@ -113,9 +125,11 @@ class StremioService:
                     if ep:
                         mappings = session.query(FileMapping).filter_by(episode_id=ep.id).all()
                         for m in mappings:
-                            stream_url = f"{self.torr_config.base_url}/stream?link={m.file_index}&hash={m.torrent_hash}&play"
+                            trackers = self._get_trackers(m.torrent.magnet_url)
                             streams.append({
                                 "title": f"Episodio {episode_num} - {m.file_path} ({round(m.file_size / 1024 / 1024, 2)} MB)",
-                                "url": stream_url
+                                "infoHash": m.torrent_hash,
+                                "fileIdx": m.file_index,
+                                "sources": trackers
                             })
         return {"streams": streams}
