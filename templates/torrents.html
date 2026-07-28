@@ -79,10 +79,12 @@ function addGenericTorrent() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "ok") {
-            alert("Torrent aggiunto!");
-            window.location.reload();
+            showToast("Torrent aggiunto!");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
         } else {
-            alert("Errore: " + data.error);
+            showToast("Errore: " + data.error, "error");
         }
     });
 }
@@ -93,8 +95,10 @@ function retryTorrent(hash) {
     })
     .then(res => res.json())
     .then(data => {
-        alert("Torrent reinserito in coda!");
-        window.location.reload();
+        showToast("Torrent reinserito in coda!");
+        setTimeout(() => {
+            window.location.reload();
+        }, 1200);
     });
 }
 
@@ -105,8 +109,10 @@ function deleteTorrent(hash) {
     })
     .then(res => res.json())
     .then(data => {
-        alert("Torrent eliminato!");
-        window.location.reload();
+        showToast("Torrent eliminato!");
+        setTimeout(() => {
+            window.location.reload();
+        }, 1200);
     });
 }
 

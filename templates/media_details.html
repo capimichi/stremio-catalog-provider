@@ -82,10 +82,12 @@ function addTorrent() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "ok") {
-            alert("Torrent aggiunto alla coda con successo!");
-            window.location.reload();
+            showToast("Torrent aggiunto alla coda con successo!");
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
         } else {
-            alert("Errore nell'aggiunta: " + data.error);
+            showToast("Errore nell'aggiunta: " + data.error, "error");
         }
     });
 }

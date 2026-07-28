@@ -60,10 +60,12 @@ function saveTorrent() {
     .then(res => res.json())
     .then(data => {
         if (data.status === "ok") {
-            alert("Torrent aggiornato correttamente!");
-            window.location.href = "/torrents";
+            showToast("Torrent aggiornato correttamente!");
+            setTimeout(() => {
+                window.location.href = "/torrents";
+            }, 1200);
         } else {
-            alert("Errore durante l'aggiornamento: " + data.error);
+            showToast("Errore durante l'aggiornamento: " + data.error, "error");
         }
     });
 }

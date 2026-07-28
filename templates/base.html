@@ -30,6 +30,52 @@
     <div class="main-content">
         {% block content %}{% endblock %}
     </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            toast.className = `toast-item toast-item-${type}`;
+
+            let iconClass = 'fa-circle-check';
+            if (type === 'error') {
+                iconClass = 'fa-circle-xmark';
+            } else if (type === 'warning') {
+                iconClass = 'fa-triangle-exclamation';
+            }
+
+            toast.innerHTML = `
+                <i class="fa-solid ${iconClass} toast-icon"></i>
+                <div class="toast-message">${message}</div>
+                <i class="fa-solid fa-xmark toast-close"></i>
+            `;
+
+            container.appendChild(toast);
+
+            // Trigger reflow to apply transition
+            toast.offsetHeight;
+            toast.classList.add('show');
+
+            const closeBtn = toast.querySelector('.toast-close');
+            closeBtn.addEventListener('click', () => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 400);
+            });
+
+            // Auto-remove after 4 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 400);
+                }
+            }, 4000);
+        }
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
