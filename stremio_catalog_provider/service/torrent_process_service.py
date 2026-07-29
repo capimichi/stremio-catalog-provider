@@ -57,10 +57,9 @@ class TorrentProcessService:
             while time.time() - start_time < poll_timeout:
                 torrent_data = self.torr_client.get_torrent(torrent.info_hash)
                 files = torrent_data.get("file_stats", [])
-                title = torrent_data.get("title")
-
-                # Fallback PTN: Se il titolo del torrent non è risolto da TorrServer, usa il primo file video
-                if not title and files:
+                
+                title = None
+                if files:
                     video_extensions = (".mkv", ".mp4", ".avi", ".mov")
                     first_video = next(
                         (f.get("path", "").split("/")[-1] for f in files if f.get("path", "").lower().endswith(video_extensions)),
@@ -69,6 +68,10 @@ class TorrentProcessService:
                     if first_video:
                         parsed_file = self.parser_service.parse_filename(first_video)
                         title = parsed_file.get("title")
+
+                # Fallback se non ci sono file video o non si riesce a decodificare un titolo dai file
+                if not title:
+                    title = torrent_data.get("name") or torrent_data.get("title")
 
                 if title and title != torrent.title:
                     torrent.title = title
