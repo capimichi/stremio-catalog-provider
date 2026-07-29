@@ -5,35 +5,50 @@ Revises: 1001_create_media_items
 Create Date: 2026-07-21 08:01:00.000000
 
 """
+
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-revision: str = '1002_create_torrents'
-down_revision: Union[str, Sequence[str], None] = '1001_create_media_items'
+revision: str = "1002_create_torrents"
+down_revision: Union[str, Sequence[str], None] = "1001_create_media_items"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
     op.create_table(
-        'torrents',
-        sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-        sa.Column('info_hash', sa.String(length=40), nullable=False),
-        sa.Column('magnet_url', sa.Text(), nullable=False),
-        sa.Column('title', sa.String(length=255), nullable=True),
-        sa.Column('status', sa.Enum('QUEUED', 'PROCESSING', 'PROCESSED', 'FAILED', name='torrent_status'), nullable=False),
-        sa.Column('error_message', sa.Text(), nullable=True),
-        sa.Column('added_at', sa.DateTime(), nullable=False),
-        sa.Column('processed_at', sa.DateTime(), nullable=True),
-        sa.Column('media_id', sa.Integer(), nullable=True),
-        sa.ForeignKeyConstraint(['media_id'], ['media_items.id'], ),
-        sa.PrimaryKeyConstraint('id'),
-        sa.UniqueConstraint('info_hash')
+        "torrents",
+        sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("info_hash", sa.String(length=40), nullable=False),
+        sa.Column("magnet_url", sa.Text(), nullable=False),
+        sa.Column("title", sa.String(length=255), nullable=True),
+        sa.Column(
+            "status",
+            sa.Enum(
+                "QUEUED", "PROCESSING", "PROCESSED", "FAILED", name="torrent_status"
+            ),
+            nullable=False,
+        ),
+        sa.Column("error_message", sa.Text(), nullable=True),
+        sa.Column("added_at", sa.DateTime(), nullable=False),
+        sa.Column("processed_at", sa.DateTime(), nullable=True),
+        sa.Column("media_id", sa.Integer(), nullable=True),
+        sa.Column("resolution", sa.String(length=50), nullable=True),
+        sa.Column("codec", sa.String(length=50), nullable=True),
+        sa.Column("quality", sa.String(length=50), nullable=True),
+        sa.Column("audio", sa.String(length=50), nullable=True),
+        sa.Column("languages", sa.String(length=100), nullable=True),
+        sa.ForeignKeyConstraint(
+            ["media_id"],
+            ["media_items.id"],
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.UniqueConstraint("info_hash"),
     )
-    op.create_index('ix_torrents_status', 'torrents', ['status'], unique=False)
+    op.create_index("ix_torrents_status", "torrents", ["status"], unique=False)
 
 
 def downgrade() -> None:
-    op.drop_index('ix_torrents_status', table_name='torrents')
-    op.drop_table('torrents')
+    op.drop_index("ix_torrents_status", table_name="torrents")
+    op.drop_table("torrents")

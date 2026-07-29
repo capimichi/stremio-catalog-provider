@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import MagicMock
 from stremio_catalog_provider.entity.base import BaseEntity
 from stremio_catalog_provider.entity.torrent import Torrent
@@ -9,21 +8,50 @@ from stremio_catalog_provider.manager.db_manager import DbManager
 from stremio_catalog_provider.config.torrserver_config import TorrServerConfig
 from stremio_catalog_provider.client.tmdb_client import TMDbClient
 from stremio_catalog_provider.repository.torrent_repository import TorrentRepository
-from stremio_catalog_provider.repository.media_item_repository import MediaItemRepository
+from stremio_catalog_provider.repository.media_item_repository import (
+    MediaItemRepository,
+)
 from stremio_catalog_provider.repository.episode_repository import EpisodeRepository
-from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
+from stremio_catalog_provider.repository.file_mapping_repository import (
+    FileMappingRepository,
+)
 from stremio_catalog_provider.service.torrent_parser_service import TorrentParserService
 from stremio_catalog_provider.service.torrent_service import TorrentService
 from stremio_catalog_provider.service.media_item_service import MediaItemService
 from stremio_catalog_provider.service.file_mapping_service import FileMappingService
 from stremio_catalog_provider.service.stremio_service import StremioService
 
+
 def test_torrent_parser_service() -> None:
-    parser = TorrentParserService()
-    res = parser.parse_filename("The.Simpsons.S01E03.1080p.mkv")
-    assert res["title"] == "The Simpsons"
-    assert res["season"] == 1
-    assert res["episode"] == 3
+    from stremio_catalog_provider.config.app_config import AppConfig
+
+    config = AppConfig(supported_languages="ita,eng,deu")
+    parser = TorrentParserService(config)
+
+    # Standard PTN resolution extraction
+    res1 = parser.parse_filename("The.Simpsons.S01E03.1080p.mkv")
+    assert res1["title"] == "The Simpsons"
+    assert res1["season"] == 1
+    assert res1["episode"] == 3
+    assert res1["resolution"] == "1080p"
+
+    # Fallback resolution detection
+    res2 = parser.parse_filename("MyMovie.1080.x264.mkv")
+    assert res2["resolution"] == "1080p"
+
+    # Configured language detection (Italian)
+    res3 = parser.parse_filename("Dune.Parte.Due.2024.Italiano.H264.mkv")
+    assert res3["languages"] == "ita"
+
+    # Dual language detection
+    res4 = parser.parse_filename("Dune.Parte.Due.2024.ita.eng.H264.mkv")
+    assert "ita" in res4["languages"]
+    assert "eng" in res4["languages"]
+
+    # Multi/Dual fallback detection
+    res5 = parser.parse_filename("Dune.Part.2.Dual.Audio.mkv")
+    assert res5["languages"] == "multi"
+
 
 def test_torrent_service_add() -> None:
     db_manager = DbManager("sqlite:///:memory:")
@@ -42,6 +70,7 @@ def test_torrent_service_add() -> None:
     assert again.info_hash == "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b"
     assert again.media_id == 42
 
+
 def test_media_item_service_add() -> None:
     db_manager = DbManager("sqlite:///:memory:")
     BaseEntity.metadata.create_all(db_manager.engine)
@@ -54,7 +83,7 @@ def test_media_item_service_add() -> None:
         "release_date": "2026-12-25",
         "overview": "A movie description",
         "poster_path": "/poster.jpg",
-        "backdrop_path": "/backdrop.jpg"
+        "backdrop_path": "/backdrop.jpg",
     }
 
     service = MediaItemService(repo, mock_tmdb)
@@ -66,6 +95,7 @@ def test_media_item_service_add() -> None:
     assert media.type == "movie"
     assert media.poster_url == "https://image.tmdb.org/t/p/w500/poster.jpg"
     assert media.background_url == "https://image.tmdb.org/t/p/original/backdrop.jpg"
+
 
 def test_file_mapping_service_remap() -> None:
     db_manager = DbManager("sqlite:///:memory:")
@@ -84,7 +114,7 @@ def test_file_mapping_service_remap() -> None:
         file_index=1,
         file_path="S1E2.mkv",
         file_size=1000,
-        media_item_id=77
+        media_item_id=77,
     )
     session.add(mapping)
     session.commit()
@@ -105,18 +135,31 @@ def test_file_mapping_service_remap() -> None:
     assert episode.season == 1
     assert episode.episode == 2
 
+
 def test_stremio_service() -> None:
     db_manager = DbManager("sqlite:///:memory:")
     BaseEntity.metadata.create_all(db_manager.engine)
 
     session = db_manager.get_session()
-    media_movie = MediaItem(imdb_id="ttMovie", type="movie", title="Movie Test", year=2026)
-    media_series = MediaItem(imdb_id="ttSeries", type="series", title="Series Test", year=2025)
+    media_movie = MediaItem(
+        imdb_id="ttMovie", type="movie", title="Movie Test", year=2026
+    )
+    media_series = MediaItem(
+        imdb_id="ttSeries", type="series", title="Series Test", year=2025
+    )
     session.add(media_movie)
     session.add(media_series)
     session.commit()
 
-    torrent = Torrent(info_hash="hash123", magnet_url="magnet123")
+    torrent = Torrent(
+        info_hash="hash123",
+        magnet_url="magnet123",
+        resolution="1080p",
+        quality="BluRay",
+        codec="x265",
+        audio="AC3",
+        languages="ita,eng",
+    )
     session.add(torrent)
     session.commit()
 
@@ -125,7 +168,7 @@ def test_stremio_service() -> None:
         file_index=1,
         file_path="movie.mkv",
         file_size=1000 * 1024 * 1024,
-        media_item_id=media_movie.id
+        media_item_id=media_movie.id,
     )
     session.add(mapping_movie)
     session.commit()
@@ -148,7 +191,10 @@ def test_stremio_service() -> None:
 
     movie_stream = service.get_stream("movie", "ttMovie")
     assert len(movie_stream["streams"]) == 1
-    assert "movie.mkv" in movie_stream["streams"][0]["title"]
-    assert movie_stream["streams"][0]["infoHash"] == "hash123"
-    assert movie_stream["streams"][0]["fileIdx"] == 0
-
+    stream = movie_stream["streams"][0]
+    assert stream["name"] == "Catalog Provider\n1080p"
+    assert "📄 movie.mkv" in stream["description"]
+    assert "💾 0.98 GB" in stream["description"]
+    assert "⚙️ BLURAY | X265 | AC3 | 🇮🇹 🇬🇧" in stream["description"]
+    assert stream["infoHash"] == "hash123"
+    assert stream["fileIdx"] == 0

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from stremio_catalog_provider.entity.media_item import MediaItem
 from stremio_catalog_provider.manager.db_manager import DbManager
 
+
 class MediaItemRepository:
     """Repository class for MediaItem entity database operations."""
 
@@ -24,7 +25,9 @@ class MediaItemRepository:
     def get_by_imdb_id(self, imdb_id: str) -> MediaItem | None:
         return self.get_session().query(MediaItem).filter_by(imdb_id=imdb_id).first()
 
-    def search_local(self, query: str, media_type: str | None = None) -> list[MediaItem]:
+    def search_local(
+        self, query: str, media_type: str | None = None
+    ) -> list[MediaItem]:
         session = self.get_session()
         q = session.query(MediaItem)
         if query:

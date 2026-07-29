@@ -1,14 +1,19 @@
 from typing import Optional
 from injector import inject
 from stremio_catalog_provider.entity.file_mapping import FileMapping
-from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
+from stremio_catalog_provider.repository.file_mapping_repository import (
+    FileMappingRepository,
+)
 from stremio_catalog_provider.repository.episode_repository import EpisodeRepository
+
 
 class FileMappingService:
     """Service to handle updating and correcting file mappings manually."""
 
     @inject
-    def __init__(self, repo: FileMappingRepository, episode_repo: EpisodeRepository) -> None:
+    def __init__(
+        self, repo: FileMappingRepository, episode_repo: EpisodeRepository
+    ) -> None:
         self.repo = repo
         self.episode_repo = episode_repo
 
@@ -21,7 +26,11 @@ class FileMappingService:
         if not mapping:
             return
 
-        if season_num is not None and episode_num is not None and mapping.media_item_id is not None:
+        if (
+            season_num is not None
+            and episode_num is not None
+            and mapping.media_item_id is not None
+        ):
             # TV Series episode mapping
             episode = self.episode_repo.get_or_create(
                 mapping.media_item_id, season_num, episode_num

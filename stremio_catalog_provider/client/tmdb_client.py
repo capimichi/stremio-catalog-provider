@@ -3,6 +3,7 @@ import httpx
 from injector import inject
 from stremio_catalog_provider.config.tmdb_config import TMDbConfig
 
+
 class TMDbClient:
     """HTTP Client for communicating with the TheMovieDatabase (TMDb) API."""
 
@@ -11,14 +12,16 @@ class TMDbClient:
         self.config = config
         self.base_url: str = "https://api.themoviedb.org/3"
 
-    def search_media(self, query: str, media_type: str, year: Optional[int] = None) -> list[dict[str, Any]]:
+    def search_media(
+        self, query: str, media_type: str, year: Optional[int] = None
+    ) -> list[dict[str, Any]]:
         """Searches movies or series on TMDb."""
         tmdb_type = "tv" if media_type == "series" else media_type
         endpoint = f"{self.base_url}/search/{tmdb_type}"
         params: dict[str, Any] = {
             "api_key": self.config.api_key,
             "query": query,
-            "language": "it-IT"
+            "language": "it-IT",
         }
         if year:
             params["year" if tmdb_type == "movie" else "first_air_date_year"] = year
@@ -37,7 +40,7 @@ class TMDbClient:
         params: dict[str, Any] = {
             "api_key": self.config.api_key,
             "language": "it-IT",
-            "append_to_response": "external_ids"
+            "append_to_response": "external_ids",
         }
         response = httpx.get(endpoint, params=params, timeout=30.0)
         response.raise_for_status()

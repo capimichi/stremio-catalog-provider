@@ -6,6 +6,7 @@ from stremio_catalog_provider.entity.base import BaseEntity
 if TYPE_CHECKING:
     from stremio_catalog_provider.entity.torrent import Torrent
 
+
 class FileMapping(BaseEntity):
     """SQLAlchemy model representing a mapping between a torrent file and a MediaItem/Episode."""
 
@@ -24,7 +25,9 @@ class FileMapping(BaseEntity):
     episode_id: Mapped[Optional[int]] = mapped_column(
         ForeignKey("episodes.id", ondelete="SET NULL"), nullable=True
     )
-    manually_corrected: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    manually_corrected: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
 
     # Relazioni
     torrent: Mapped["Torrent"] = relationship("Torrent", back_populates="mappings")
@@ -32,4 +35,3 @@ class FileMapping(BaseEntity):
     @property
     def torrent_hash(self) -> str:
         return self.torrent.info_hash
-

@@ -1,16 +1,20 @@
 import time
 from datetime import datetime
-from typing import Optional
 from injector import inject
 from stremio_catalog_provider.repository.torrent_repository import TorrentRepository
-from stremio_catalog_provider.repository.media_item_repository import MediaItemRepository
+from stremio_catalog_provider.repository.media_item_repository import (
+    MediaItemRepository,
+)
 from stremio_catalog_provider.repository.episode_repository import EpisodeRepository
-from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
+from stremio_catalog_provider.repository.file_mapping_repository import (
+    FileMappingRepository,
+)
 from stremio_catalog_provider.client.torrserver_client import TorrServerClient
 from stremio_catalog_provider.client.tmdb_client import TMDbClient
 from stremio_catalog_provider.service.torrent_parser_service import TorrentParserService
 from stremio_catalog_provider.service.media_item_service import MediaItemService
 from stremio_catalog_provider.entity.file_mapping import FileMapping
+
 
 class TorrentProcessService:
     """Service responsible for processing the queued torrents and resolving their metadata."""
@@ -25,7 +29,7 @@ class TorrentProcessService:
         torr_client: TorrServerClient,
         tmdb_client: TMDbClient,
         parser_service: TorrentParserService,
-        media_item_service: MediaItemService
+        media_item_service: MediaItemService,
     ) -> None:
         self.torrent_repo = torrent_repo
         self.media_repo = media_repo
@@ -57,17 +61,26 @@ class TorrentProcessService:
             while time.time() - start_time < poll_timeout:
                 torrent_data = self.torr_client.get_torrent(torrent.info_hash)
                 files = torrent_data.get("file_stats", [])
-                
+
                 title = None
                 if files:
                     video_extensions = (".mkv", ".mp4", ".avi", ".mov")
                     first_video = next(
-                        (f.get("path", "").split("/")[-1] for f in files if f.get("path", "").lower().endswith(video_extensions)),
-                        None
+                        (
+                            f.get("path", "").split("/")[-1]
+                            for f in files
+                            if f.get("path", "").lower().endswith(video_extensions)
+                        ),
+                        None,
                     )
                     if first_video:
                         parsed_file = self.parser_service.parse_filename(first_video)
                         title = parsed_file.get("title")
+                        torrent.resolution = parsed_file.get("resolution")
+                        torrent.codec = parsed_file.get("codec")
+                        torrent.quality = parsed_file.get("quality")
+                        torrent.audio = parsed_file.get("audio")
+                        torrent.languages = parsed_file.get("languages")
 
                 # Fallback se non ci sono file video o non si riesce a decodificare un titolo dai file
                 if not title:
@@ -82,12 +95,14 @@ class TorrentProcessService:
                 time.sleep(poll_interval)
 
             if not files:
-                raise TimeoutError("TorrServer did not resolve the file list within the timeout.")
+                raise TimeoutError(
+                    "TorrServer did not resolve the file list within the timeout."
+                )
 
             # 3. Filter and process video files
             video_extensions = (".mkv", ".mp4", ".avi", ".mov")
             media_cache = {}  # Local cache to prevent redundant TMDB queries for files in the same torrent
-            
+
             for f in files:
                 file_path = f.get("path", "")
                 if not file_path.lower().endswith(video_extensions):
@@ -102,7 +117,7 @@ class TorrentProcessService:
                 else:
                     search_type = "series" if parsed["season"] is not None else "movie"
                     cache_key = (parsed["title"].lower().strip(), search_type)
-                    
+
                     if cache_key in media_cache:
                         media_item = media_cache[cache_key]
                     else:
@@ -113,8 +128,10 @@ class TorrentProcessService:
                         if results:
                             tmdb_id = results[0]["id"]
                             try:
-                                media_item = self.media_item_service.add_media_from_tmdb(
-                                    tmdb_id, search_type
+                                media_item = (
+                                    self.media_item_service.add_media_from_tmdb(
+                                        tmdb_id, search_type
+                                    )
                                 )
                             except Exception:
                                 pass
@@ -126,7 +143,7 @@ class TorrentProcessService:
                     file_index=f.get("id"),
                     file_path=file_path,
                     file_size=f.get("length") or f.get("size") or 0,
-                    media_item_id=media_item.id if media_item else None
+                    media_item_id=media_item.id if media_item else None,
                 )
 
                 if (
@@ -143,7 +160,9 @@ class TorrentProcessService:
                 self.mapping_repo.add(mapping)
 
             # Salva il primo media_item_id rilevato dai file se non è già presente un media_id
-            mapped_ids = [m.media_item_id for m in torrent.mappings if m.media_item_id is not None]
+            mapped_ids = [
+                m.media_item_id for m in torrent.mappings if m.media_item_id is not None
+            ]
             if mapped_ids and not torrent.media_id:
                 torrent.media_id = mapped_ids[0]
 

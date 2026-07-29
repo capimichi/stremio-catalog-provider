@@ -3,16 +3,20 @@ import httpx
 from stremio_catalog_provider.config.tmdb_config import TMDbConfig
 from stremio_catalog_provider.client.tmdb_client import TMDbClient
 
+
 @respx.mock
 def test_search_media_success() -> None:
     respx.get("https://api.themoviedb.org/3/search/movie").mock(
-        return_value=httpx.Response(200, json={"results": [{"id": 123, "title": "Inception"}]})
+        return_value=httpx.Response(
+            200, json={"results": [{"id": 123, "title": "Inception"}]}
+        )
     )
 
     client = TMDbClient(TMDbConfig("dummy"))
     results = client.search_media("Inception", "movie")
     assert len(results) == 1
     assert results[0]["id"] == 123
+
 
 @respx.mock
 def test_get_details_success() -> None:
@@ -22,8 +26,8 @@ def test_get_details_success() -> None:
             json={
                 "id": 123,
                 "title": "Inception",
-                "external_ids": {"imdb_id": "tt1375666"}
-            }
+                "external_ids": {"imdb_id": "tt1375666"},
+            },
         )
     )
 
@@ -32,16 +36,20 @@ def test_get_details_success() -> None:
     assert details["id"] == 123
     assert details["external_ids"]["imdb_id"] == "tt1375666"
 
+
 @respx.mock
 def test_search_series_success() -> None:
     respx.get("https://api.themoviedb.org/3/search/tv").mock(
-        return_value=httpx.Response(200, json={"results": [{"id": 456, "name": "Modern Family"}]})
+        return_value=httpx.Response(
+            200, json={"results": [{"id": 456, "name": "Modern Family"}]}
+        )
     )
 
     client = TMDbClient(TMDbConfig("dummy"))
     results = client.search_media("Modern Family", "series")
     assert len(results) == 1
     assert results[0]["id"] == 456
+
 
 @respx.mock
 def test_get_series_details_success() -> None:
@@ -51,8 +59,8 @@ def test_get_series_details_success() -> None:
             json={
                 "id": 456,
                 "name": "Modern Family",
-                "external_ids": {"imdb_id": "tt1442437"}
-            }
+                "external_ids": {"imdb_id": "tt1442437"},
+            },
         )
     )
 

@@ -3,6 +3,7 @@ from fastapi import APIRouter
 from injector import inject
 from stremio_catalog_provider.service.stremio_service import StremioService
 
+
 class StremioController:
     """Controller exposing Stremio Addon manifest, catalog, meta, and stream API endpoints."""
 
@@ -17,7 +18,9 @@ class StremioController:
         self.router.add_api_route(
             "/catalog/{media_type}/{catalog_id}.json", self.catalog, methods=["GET"]
         )
-        self.router.add_api_route("/meta/{media_type}/{imdb_id}.json", self.meta, methods=["GET"])
+        self.router.add_api_route(
+            "/meta/{media_type}/{imdb_id}.json", self.meta, methods=["GET"]
+        )
         self.router.add_api_route(
             "/stream/{media_type}/{stream_id}.json", self.stream, methods=["GET"]
         )

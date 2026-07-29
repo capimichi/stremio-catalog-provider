@@ -4,6 +4,7 @@ from stremio_catalog_provider.config.tmdb_config import TMDbConfig
 from stremio_catalog_provider.config.torrserver_config import TorrServerConfig
 from stremio_catalog_provider.manager.db_manager import DbManager
 
+
 def test_container_resolves_bindings() -> None:
     os.environ["DATABASE_URL"] = "sqlite:///:memory:"
     os.environ["TMDB_API_KEY"] = "test_key"

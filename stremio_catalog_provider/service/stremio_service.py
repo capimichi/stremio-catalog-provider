@@ -1,11 +1,16 @@
 from typing import Any
 import urllib.parse
 from injector import inject
-from stremio_catalog_provider.repository.media_item_repository import MediaItemRepository
-from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
+from stremio_catalog_provider.repository.media_item_repository import (
+    MediaItemRepository,
+)
+from stremio_catalog_provider.repository.file_mapping_repository import (
+    FileMappingRepository,
+)
 from stremio_catalog_provider.config.torrserver_config import TorrServerConfig
 from stremio_catalog_provider.entity.episode import Episode
 from stremio_catalog_provider.entity.file_mapping import FileMapping
+
 
 class StremioService:
     """Service to handle Stremio catalog, metadata and stream requests."""
@@ -15,7 +20,7 @@ class StremioService:
         self,
         media_repo: MediaItemRepository,
         mapping_repo: FileMappingRepository,
-        torr_config: TorrServerConfig
+        torr_config: TorrServerConfig,
     ) -> None:
         self.media_repo = media_repo
         self.mapping_repo = mapping_repo
@@ -32,9 +37,9 @@ class StremioService:
             "types": ["movie", "series"],
             "catalogs": [
                 {"type": "movie", "id": "custom_movies", "name": "Film Personali"},
-                {"type": "series", "id": "custom_series", "name": "Serie Personali"}
+                {"type": "series", "id": "custom_series", "name": "Serie Personali"},
             ],
-            "idPrefixes": ["tt"]
+            "idPrefixes": ["tt"],
         }
 
     def get_catalog(self, media_type: str) -> dict[str, Any]:
@@ -42,14 +47,16 @@ class StremioService:
         items = self.media_repo.search_local(query="", media_type=media_type)
         metas = []
         for item in items:
-            metas.append({
-                "id": item.imdb_id,
-                "type": item.type,
-                "name": item.title,
-                "poster": item.poster_url,
-                "background": item.background_url,
-                "description": item.description
-            })
+            metas.append(
+                {
+                    "id": item.imdb_id,
+                    "type": item.type,
+                    "name": item.title,
+                    "poster": item.poster_url,
+                    "background": item.background_url,
+                    "description": item.description,
+                }
+            )
         return {"metas": metas}
 
     def get_meta(self, media_type: str, imdb_id: str) -> dict[str, Any]:
@@ -64,7 +71,7 @@ class StremioService:
             "name": media.title,
             "poster": media.poster_url,
             "background": media.background_url,
-            "description": media.description
+            "description": media.description,
         }
 
         if media.type == "series":
@@ -77,12 +84,14 @@ class StremioService:
                     ep = session.query(Episode).filter_by(id=m.episode_id).first()
                     if ep and (ep.season, ep.episode) not in seen_episodes:
                         seen_episodes.add((ep.season, ep.episode))
-                        videos.append({
-                            "id": f"{media.imdb_id}:{ep.season}:{ep.episode}",
-                            "season": ep.season,
-                            "episode": ep.episode,
-                            "title": f"Stagione {ep.season} Episodio {ep.episode}"
-                        })
+                        videos.append(
+                            {
+                                "id": f"{media.imdb_id}:{ep.season}:{ep.episode}",
+                                "season": ep.season,
+                                "episode": ep.episode,
+                                "title": f"Stagione {ep.season} Episodio {ep.episode}",
+                            }
+                        )
             meta["videos"] = sorted(videos, key=lambda x: (x["season"], x["episode"]))
         return {"meta": meta}
 
@@ -95,6 +104,45 @@ class StremioService:
         except Exception:
             return []
 
+    LANGUAGE_EMOJIS = {
+        "ita": "🇮🇹",
+        "eng": "🇬🇧",
+        "deu": "🇩🇪",
+        "fra": "🇫🇷",
+        "spa": "🇪🇸",
+        "multi": "🌍",
+        "dual": "🌍",
+    }
+
+    def _format_stream_description(self, m: FileMapping) -> str:
+        torrent = m.torrent
+        size_gb = m.file_size / (1024 * 1024 * 1024)
+
+        # Technical details
+        tech_details = []
+        if torrent.quality:
+            tech_details.append(torrent.quality.upper())
+        if torrent.codec:
+            tech_details.append(torrent.codec.upper())
+        if torrent.audio:
+            tech_details.append(torrent.audio.upper())
+
+        # Add flags for languages
+        if torrent.languages:
+            langs = torrent.languages.split(",")
+            flags = []
+            for lang in langs:
+                flags.append(self.LANGUAGE_EMOJIS.get(lang, "🌍"))
+            tech_details.append(" ".join(flags))
+
+        tech_str = " | ".join(tech_details)
+
+        lines = [f"📄 {m.file_path}", f"💾 {size_gb:.2f} GB"]
+        if tech_str:
+            lines.append(f"⚙️ {tech_str}")
+
+        return "\n".join(lines)
+
     def get_stream(self, media_type: str, stream_id: str) -> dict[str, Any]:
         """Returns available video streams for a specific movie or TV series episode."""
         streams = []
@@ -103,33 +151,53 @@ class StremioService:
         if media_type == "movie":
             media = self.media_repo.get_by_imdb_id(stream_id)
             if media:
-                mappings = session.query(FileMapping).filter_by(media_item_id=media.id).all()
+                mappings = (
+                    session.query(FileMapping).filter_by(media_item_id=media.id).all()
+                )
                 for m in mappings:
                     trackers = self._get_trackers(m.torrent.magnet_url)
-                    streams.append({
-                        "title": f"Stream {m.file_path} ({round(m.file_size / 1024 / 1024, 2)} MB)",
-                        "infoHash": m.torrent_hash,
-                        "fileIdx": m.file_index - 1,
-                        "sources": trackers
-                    })
+                    streams.append(
+                        {
+                            "name": f"Catalog Provider\n{m.torrent.resolution or ''}".strip(),
+                            "description": self._format_stream_description(m),
+                            "infoHash": m.torrent_hash,
+                            "fileIdx": m.file_index - 1,
+                            "sources": trackers,
+                        }
+                    )
         elif media_type == "series":
             # stream_id format is imdb_id:season:episode
             parts = stream_id.split(":")
             if len(parts) == 3:
-                imdb_id, season_num, episode_num = parts[0], int(parts[1]), int(parts[2])
+                imdb_id, season_num, episode_num = (
+                    parts[0],
+                    int(parts[1]),
+                    int(parts[2]),
+                )
                 media = self.media_repo.get_by_imdb_id(imdb_id)
                 if media:
-                    ep = session.query(Episode).filter_by(
-                        media_item_id=media.id, season=season_num, episode=episode_num
-                    ).first()
+                    ep = (
+                        session.query(Episode)
+                        .filter_by(
+                            media_item_id=media.id,
+                            season=season_num,
+                            episode=episode_num,
+                        )
+                        .first()
+                    )
                     if ep:
-                        mappings = session.query(FileMapping).filter_by(episode_id=ep.id).all()
+                        mappings = (
+                            session.query(FileMapping).filter_by(episode_id=ep.id).all()
+                        )
                         for m in mappings:
                             trackers = self._get_trackers(m.torrent.magnet_url)
-                            streams.append({
-                                "title": f"Episodio {episode_num} - {m.file_path} ({round(m.file_size / 1024 / 1024, 2)} MB)",
-                                "infoHash": m.torrent_hash,
-                                "fileIdx": m.file_index - 1,
-                                "sources": trackers
-                            })
+                            streams.append(
+                                {
+                                    "name": f"Catalog Provider\n{m.torrent.resolution or ''}".strip(),
+                                    "description": self._format_stream_description(m),
+                                    "infoHash": m.torrent_hash,
+                                    "fileIdx": m.file_index - 1,
+                                    "sources": trackers,
+                                }
+                            )
         return {"streams": streams}

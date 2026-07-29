@@ -3,6 +3,7 @@ import httpx
 from injector import inject
 from stremio_catalog_provider.config.torrserver_config import TorrServerConfig
 
+
 class TorrServerClient:
     """HTTP Client for communicating with TorrServer."""
 
@@ -49,4 +50,3 @@ class TorrServerClient:
         response = httpx.post(endpoint, json=payload, auth=self.auth, timeout=30.0)
         response.raise_for_status()
         return response.json()
-

@@ -1,6 +1,5 @@
 import os
 import base64
-import pytest
 
 # Configure environment variables before importing the FastAPI app
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
@@ -15,6 +14,7 @@ from stremio_catalog_provider.container.default_container import DefaultContaine
 from stremio_catalog_provider.config.web_ui_config import WebUiConfig
 from stremio_catalog_provider.entity.base import BaseEntity
 from stremio_catalog_provider.manager.db_manager import DbManager
+
 
 def test_web_ui_and_api_auth_denied() -> None:
     """Verifies that routes require HTTP Basic Authentication and deny unauthorized requests."""
@@ -36,6 +36,7 @@ def test_web_ui_and_api_auth_denied() -> None:
     # 2. Test API route (/api/torrents) without auth header
     res_api = client.post("/api/torrents", json={"magnet_url": "dummy"})
     assert res_api.status_code == 401
+
 
 def test_web_ui_and_api_auth_allowed() -> None:
     """Verifies that correct credentials grant access while incorrect credentials deny access."""
@@ -77,15 +78,24 @@ def test_update_torrent_endpoint() -> None:
     from stremio_catalog_provider.entity.media_item import MediaItem
     from stremio_catalog_provider.entity.torrent import Torrent
     from stremio_catalog_provider.entity.file_mapping import FileMapping
-    
-    media = MediaItem(id=10, imdb_id="ttMovie", type="movie", title="Movie Test", year=2026)
+
+    media = MediaItem(
+        id=10, imdb_id="ttMovie", type="movie", title="Movie Test", year=2026
+    )
     session.add(media)
-    
-    torrent = Torrent(info_hash="hashupdate", magnet_url="magnetupdate", title="Original Title", status="QUEUED")
+
+    torrent = Torrent(
+        info_hash="hashupdate",
+        magnet_url="magnetupdate",
+        title="Original Title",
+        status="QUEUED",
+    )
     session.add(torrent)
     session.commit()
 
-    mapping = FileMapping(torrent_id=torrent.id, file_index=1, file_path="movie.mkv", file_size=1000)
+    mapping = FileMapping(
+        torrent_id=torrent.id, file_index=1, file_path="movie.mkv", file_size=1000
+    )
     session.add(mapping)
     session.commit()
 
@@ -93,11 +103,7 @@ def test_update_torrent_endpoint() -> None:
     token = base64.b64encode(b"test_user:test_pass").decode("utf-8")
     headers = {"Authorization": f"Basic {token}"}
 
-    payload = {
-        "title": "New Title",
-        "media_id": 10,
-        "remap_files": True
-    }
+    payload = {"title": "New Title", "media_id": 10, "remap_files": True}
 
     # Verify authentication is required
     response_no_auth = client.put(f"/api/torrents/{torrent.id}", json=payload)
@@ -116,4 +122,3 @@ def test_update_torrent_endpoint() -> None:
 
     updated_mapping = session.query(FileMapping).filter_by(id=mapping.id).first()
     assert updated_mapping.media_item_id == 10
-

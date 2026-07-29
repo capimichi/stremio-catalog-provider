@@ -4,6 +4,7 @@ from injector import inject
 from stremio_catalog_provider.entity.torrent import Torrent
 from stremio_catalog_provider.repository.torrent_repository import TorrentRepository
 
+
 class TorrentService:
     """Service for managing torrent business logic."""
 
@@ -24,7 +25,7 @@ class TorrentService:
                 info_hash=info_hash,
                 magnet_url=magnet_url,
                 status="QUEUED",
-                media_id=media_id
+                media_id=media_id,
             )
             self.repo.add(torrent)
         return torrent

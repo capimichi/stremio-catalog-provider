@@ -11,6 +11,7 @@ from stremio_catalog_provider.manager.db_manager import DbManager
 
 T = TypeVar("T")
 
+
 class DefaultContainer:
     """Dependency injection container using the injector library."""
 
@@ -31,7 +32,10 @@ class DefaultContainer:
         return self.injector.get(key)
 
     def _init_bindings(self) -> None:
-        db_url = os.environ.get("DATABASE_URL", "mysql+pymysql://catalog_user:catalog_password@db/stremio_catalog")
+        db_url = os.environ.get(
+            "DATABASE_URL",
+            "mysql+pymysql://catalog_user:catalog_password@db/stremio_catalog",
+        )
         tmdb_key = os.environ.get("TMDB_API_KEY", "")
         torr_url = os.environ.get("TORRSERVER_BASE_URL", "http://localhost:8090")
         torr_user = os.environ.get("TORRSERVER_USERNAME")
@@ -39,9 +43,12 @@ class DefaultContainer:
         ui_user = os.environ.get("BASIC_AUTH_USERNAME", "admin")
         ui_pass = os.environ.get("BASIC_AUTH_PASSWORD", "admin")
         base_url = os.environ.get("BASE_URL")
+        supported_langs = os.environ.get("SUPPORTED_LANGUAGES")
 
         self.injector.binder.bind(DbManager, to=DbManager(db_url))
         self.injector.binder.bind(TMDbConfig, to=TMDbConfig(tmdb_key))
-        self.injector.binder.bind(TorrServerConfig, to=TorrServerConfig(torr_url, torr_user, torr_pass))
+        self.injector.binder.bind(
+            TorrServerConfig, to=TorrServerConfig(torr_url, torr_user, torr_pass)
+        )
         self.injector.binder.bind(WebUiConfig, to=WebUiConfig(ui_user, ui_pass))
-        self.injector.binder.bind(AppConfig, to=AppConfig(base_url))
+        self.injector.binder.bind(AppConfig, to=AppConfig(base_url, supported_langs))

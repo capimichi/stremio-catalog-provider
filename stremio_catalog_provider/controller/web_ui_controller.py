@@ -7,12 +7,17 @@ from fastapi.templating import Jinja2Templates
 from injector import inject
 from stremio_catalog_provider.config.web_ui_config import WebUiConfig
 from stremio_catalog_provider.config.app_config import AppConfig
-from stremio_catalog_provider.repository.media_item_repository import MediaItemRepository
+from stremio_catalog_provider.repository.media_item_repository import (
+    MediaItemRepository,
+)
 from stremio_catalog_provider.repository.torrent_repository import TorrentRepository
-from stremio_catalog_provider.repository.file_mapping_repository import FileMappingRepository
+from stremio_catalog_provider.repository.file_mapping_repository import (
+    FileMappingRepository,
+)
 from stremio_catalog_provider.repository.episode_repository import EpisodeRepository
 from stremio_catalog_provider.entity.episode import Episode
 from stremio_catalog_provider.entity.file_mapping import FileMapping
+
 
 class WebUiController:
     """Controller rendering Jinja2 HTML templates for the admin dashboard panel."""
@@ -25,7 +30,7 @@ class WebUiController:
         media_repo: MediaItemRepository,
         torrent_repo: TorrentRepository,
         mapping_repo: FileMappingRepository,
-        episode_repo: EpisodeRepository
+        episode_repo: EpisodeRepository,
     ) -> None:
         self.config = config
         self.app_config = app_config
@@ -61,13 +66,36 @@ class WebUiController:
 
     def _register_routes(self) -> None:
         self.router.add_api_route("/", self.root_redirect, methods=["GET"])
-        self.router.add_api_route("/dashboard", self.dashboard, methods=["GET"], response_class=HTMLResponse)
-        self.router.add_api_route("/media", self.media, methods=["GET"], response_class=HTMLResponse)
-        self.router.add_api_route("/media/add", self.media_add, methods=["GET"], response_class=HTMLResponse)
-        self.router.add_api_route("/media/{media_id}", self.media_details, methods=["GET"], response_class=HTMLResponse)
-        self.router.add_api_route("/torrents", self.torrents, methods=["GET"], response_class=HTMLResponse)
-        self.router.add_api_route("/torrents/{torrent_id}/edit", self.torrent_edit, methods=["GET"], response_class=HTMLResponse)
-        self.router.add_api_route("/remap/{mapping_id}", self.remap, methods=["GET"], response_class=HTMLResponse)
+        self.router.add_api_route(
+            "/dashboard", self.dashboard, methods=["GET"], response_class=HTMLResponse
+        )
+        self.router.add_api_route(
+            "/media", self.media, methods=["GET"], response_class=HTMLResponse
+        )
+        self.router.add_api_route(
+            "/media/add", self.media_add, methods=["GET"], response_class=HTMLResponse
+        )
+        self.router.add_api_route(
+            "/media/{media_id}",
+            self.media_details,
+            methods=["GET"],
+            response_class=HTMLResponse,
+        )
+        self.router.add_api_route(
+            "/torrents", self.torrents, methods=["GET"], response_class=HTMLResponse
+        )
+        self.router.add_api_route(
+            "/torrents/{torrent_id}/edit",
+            self.torrent_edit,
+            methods=["GET"],
+            response_class=HTMLResponse,
+        )
+        self.router.add_api_route(
+            "/remap/{mapping_id}",
+            self.remap,
+            methods=["GET"],
+            response_class=HTMLResponse,
+        )
 
     async def dashboard(
         self, request: Request, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
@@ -100,8 +128,8 @@ class WebUiController:
                 "queued_count": queued,
                 "processing_count": processing,
                 "processed_count": processed,
-                "failed_count": failed
-            }
+                "failed_count": failed,
+            },
         )
 
     async def media(
@@ -111,12 +139,7 @@ class WebUiController:
         self.verify_credentials(credentials)
         media_items = self.media_repo.search_local(query="")
         return self.templates.TemplateResponse(
-            request,
-            "media.html",
-            {
-                "active_page": "media",
-                "media_items": media_items
-            }
+            request, "media.html", {"active_page": "media", "media_items": media_items}
         )
 
     async def media_add(
@@ -125,15 +148,14 @@ class WebUiController:
         """Renders the page to add/import a new MediaItem from TMDB."""
         self.verify_credentials(credentials)
         return self.templates.TemplateResponse(
-            request,
-            "media_add.html",
-            {
-                "active_page": "media"
-            }
+            request, "media_add.html", {"active_page": "media"}
         )
 
     async def media_details(
-        self, request: Request, media_id: int, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
+        self,
+        request: Request,
+        media_id: int,
+        credentials: HTTPBasicCredentials = Depends(HTTPBasic()),
     ) -> Any:
         """Renders the detailed overview of a single MediaItem."""
         self.verify_credentials(credentials)
@@ -149,11 +171,7 @@ class WebUiController:
         return self.templates.TemplateResponse(
             request,
             "media_details.html",
-            {
-                "active_page": "media",
-                "media": media,
-                "torrents": torrents
-            }
+            {"active_page": "media", "media": media, "torrents": torrents},
         )
 
     async def torrents(
@@ -163,16 +181,14 @@ class WebUiController:
         self.verify_credentials(credentials)
         torrents = self.torrent_repo.get_all()
         return self.templates.TemplateResponse(
-            request,
-            "torrents.html",
-            {
-                "active_page": "torrents",
-                "torrents": torrents
-            }
+            request, "torrents.html", {"active_page": "torrents", "torrents": torrents}
         )
 
     async def remap(
-        self, request: Request, mapping_id: int, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
+        self,
+        request: Request,
+        mapping_id: int,
+        credentials: HTTPBasicCredentials = Depends(HTTPBasic()),
     ) -> Any:
         """Renders the manual mapping config page for a file."""
         self.verify_credentials(credentials)
@@ -182,8 +198,16 @@ class WebUiController:
             raise HTTPException(status_code=404, detail="Mapping not found")
 
         torrent = mapping.torrent
-        media = self.media_repo.get_by_id(mapping.media_item_id) if mapping.media_item_id else None
-        episode = session.query(Episode).filter_by(id=mapping.episode_id).first() if mapping.episode_id else None
+        media = (
+            self.media_repo.get_by_id(mapping.media_item_id)
+            if mapping.media_item_id
+            else None
+        )
+        episode = (
+            session.query(Episode).filter_by(id=mapping.episode_id).first()
+            if mapping.episode_id
+            else None
+        )
         all_media = self.media_repo.search_local(query="")
 
         return self.templates.TemplateResponse(
@@ -195,12 +219,15 @@ class WebUiController:
                 "torrent": torrent,
                 "media": media,
                 "episode": episode,
-                "all_media": all_media
-            }
+                "all_media": all_media,
+            },
         )
 
     async def torrent_edit(
-        self, request: Request, torrent_id: int, credentials: HTTPBasicCredentials = Depends(HTTPBasic())
+        self,
+        request: Request,
+        torrent_id: int,
+        credentials: HTTPBasicCredentials = Depends(HTTPBasic()),
     ) -> Any:
         """Renders the torrent edit details page."""
         self.verify_credentials(credentials)
@@ -211,14 +238,9 @@ class WebUiController:
         return self.templates.TemplateResponse(
             request,
             "torrent_edit.html",
-            {
-                "active_page": "torrents",
-                "torrent": torrent,
-                "all_media": all_media
-            }
+            {"active_page": "torrents", "torrent": torrent, "all_media": all_media},
         )
 
     async def root_redirect(self) -> RedirectResponse:
         """Redirects root path to dashboard page."""
         return RedirectResponse(url="/dashboard")
-

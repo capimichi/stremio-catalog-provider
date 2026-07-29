@@ -2,7 +2,10 @@ import time
 from typing import Any
 from injector import inject
 from stremio_catalog_provider.command.abstract_command import AbstractCommand
-from stremio_catalog_provider.service.torrent_process_service import TorrentProcessService
+from stremio_catalog_provider.service.torrent_process_service import (
+    TorrentProcessService,
+)
+
 
 class WorkerCommand(AbstractCommand):
     """Click Command to start the background worker process."""

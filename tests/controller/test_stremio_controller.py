@@ -1,5 +1,4 @@
 import os
-import pytest
 
 # Configure environment variables before importing the FastAPI app
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
@@ -14,6 +13,7 @@ from stremio_catalog_provider.entity.media_item import MediaItem
 from stremio_catalog_provider.entity.torrent import Torrent
 from stremio_catalog_provider.entity.file_mapping import FileMapping
 from stremio_catalog_provider.manager.db_manager import DbManager
+
 
 def test_stremio_endpoints() -> None:
     """Tests all public Stremio routes: manifest, catalog, meta, and stream."""
@@ -30,7 +30,9 @@ def test_stremio_endpoints() -> None:
     session.commit()
 
     torrent = Torrent(
-        info_hash="hash123", magnet_url="magnet:?xt=urn:btih:hash123", status="PROCESSED"
+        info_hash="hash123",
+        magnet_url="magnet:?xt=urn:btih:hash123",
+        status="PROCESSED",
     )
     session.add(torrent)
     session.commit()
@@ -40,7 +42,7 @@ def test_stremio_endpoints() -> None:
         file_index=1,
         file_path="movie.mp4",
         file_size=2000000000,
-        media_item_id=media.id
+        media_item_id=media.id,
     )
     session.add(mapping)
     session.commit()
@@ -67,4 +69,4 @@ def test_stremio_endpoints() -> None:
     res_stream = client.get("/stream/movie/tt99999.json")
     assert res_stream.status_code == 200
     assert len(res_stream.json()["streams"]) == 1
-    assert "movie.mp4" in res_stream.json()["streams"][0]["title"]
+    assert "movie.mp4" in res_stream.json()["streams"][0]["description"]

@@ -36,6 +36,7 @@ app.include_router(api_ctrl.router)
 # Middleware to clean up SQLAlchemy scoped sessions at the end of each HTTP request
 from stremio_catalog_provider.manager.db_manager import DbManager
 
+
 @app.middleware("http")
 async def db_session_middleware(request, call_next):
     try:

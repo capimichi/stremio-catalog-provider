@@ -1,5 +1,6 @@
 from stremio_catalog_provider.config.app_config import AppConfig
 
+
 def test_app_config_normalizes_base_url():
     # Test url without trailing slash
     config = AppConfig(base_url="https://example.com")

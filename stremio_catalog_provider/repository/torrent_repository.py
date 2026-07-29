@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from stremio_catalog_provider.entity.torrent import Torrent
 from stremio_catalog_provider.manager.db_manager import DbManager
 
+
 class TorrentRepository:
     """Repository class for Torrent entity database operations."""
 
@@ -39,7 +40,11 @@ class TorrentRepository:
         """Retrieves and locks the next QUEUED torrent, changing its status to PROCESSING."""
         session = self.get_session()
         try:
-            query = session.query(Torrent).filter(Torrent.status == "QUEUED").order_by(Torrent.added_at.asc())
+            query = (
+                session.query(Torrent)
+                .filter(Torrent.status == "QUEUED")
+                .order_by(Torrent.added_at.asc())
+            )
 
             # Attempt to extract with skip locked if supported (MySQL/MariaDB)
             if session.bind.dialect.name in ("mysql", "mariadb"):
